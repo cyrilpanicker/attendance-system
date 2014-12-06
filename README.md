@@ -5,14 +5,25 @@ attendanceSystem
 
 ***Steps to build and run the application.***
 
+
+* make sure the system must be running on CST time zone.
+
+
 * install mongodb
 
+
 * clone the git repository.
+
+
+* use the below command to start mongodb daemon process
+`mongod`
+mongodb executables need to be in path. or run the command from mongodb installation folder.
 
 
 * use the below command to import date from `attendanceSystem/data.csv` to mongodb.  
 `mongoimport -d dashDb -c members --type csv --file data.csv --headerline`  
 the data will be imported to `members` collection under `dashDb` database.
+mongodb executables need to be in path. or copy `attendanceSystem/data.csv` to mongodb installation folder and run the command from mongodb installation folder.
 
 
 * use the below command to install nodejs dependencies.  
