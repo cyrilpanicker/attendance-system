@@ -23,7 +23,7 @@ mongodb executables need to be in path. or run the command from `/bin` directory
 * use the below command to import data from `attendanceSystem/data.csv` to mongodb.  
 `mongoimport -d dashDb -c members --type csv --file data.csv --headerline`  
 the data will be imported to `members` collection under `dashDb` database.  
-mongodb executables need to be in path. or copy `attendanceSystem/data.csv` to `/bin` directory in mongodb installation folder and run the command from mongodb installation folder.
+mongodb executables need to be in path. or copy `attendanceSystem/data.csv` to `/bin` directory in mongodb installation folder and run the command from run the command from `/bin` directory.
 
 
 * use the below command to install nodejs dependencies.  
