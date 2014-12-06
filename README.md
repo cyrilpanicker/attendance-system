@@ -36,4 +36,4 @@ the command should be run from `attendanceSystem` root folder.
 the command should be run from `attendanceSystem` root folder.  
 
 
-* point browser at `http://127.0.0.1:8000/`.
+* point browser to `http://127.0.0.1:8000/`.
