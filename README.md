@@ -20,7 +20,7 @@ attendanceSystem
 mongodb executables need to be in path. or run the command from mongodb installation folder.
 
 
-* use the below command to import date from `attendanceSystem/data.csv` to mongodb.  
+* use the below command to import data from `attendanceSystem/data.csv` to mongodb.  
 `mongoimport -d dashDb -c members --type csv --file data.csv --headerline`  
 the data will be imported to `members` collection under `dashDb` database.  
 mongodb executables need to be in path. or copy `attendanceSystem/data.csv` to mongodb installation folder and run the command from mongodb installation folder.
