@@ -163,7 +163,9 @@
                         </p>
                     </div>
                     <div class="col-md-1">
-                        <select ng-model="shift" ng-options="shift as shift for shift in shifts" class="form-control shiftDropdown"></select>
+                        <select ng-model="shift" ng-options="shift as shift for shift in shifts" class="form-control shiftDropdown">
+				<option value="">Shift</option>
+			</select>
                     </div>
                 </div>
                 <table class="table table-striped table-condensed" ng-show="membersInShift.length">
