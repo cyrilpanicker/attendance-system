@@ -7,7 +7,6 @@
   "dependencies": {
     "mongodb": "~1.4.22",
     "express": "~4.10.4",
-    "body-parser": "~1.10.0",
-    "datejs": "~1.0.0-rc1"
+    "body-parser": "~1.10.0"
   }
 }
