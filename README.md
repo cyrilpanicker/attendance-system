@@ -1,7 +1,7 @@
 attendanceSystem
 ================
 
-**application to track members in a give shift**
+**application to track members in a given shift**
 
 ***Steps to build and run the application.***
 
