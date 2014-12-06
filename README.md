@@ -6,7 +6,7 @@ attendanceSystem
 ***Steps to build and run the application.***
 
 
-* make sure the system must be running on CST time zone.
+* make sure the system is running on CST time zone.
 
 
 * install mongodb
