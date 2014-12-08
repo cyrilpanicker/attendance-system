@@ -19,7 +19,7 @@
         color:rgb(60, 118, 65);
     }
     .shiftDropdown{
-    	width: 76px;
+        width: 76px;
     }
     </style>
     <script>
@@ -28,6 +28,7 @@
         cfpLoadingBarProvider.includeSpinner=false;
     }])
     .factory('Service', ['$http', function ($http) {
+
         var service={};
         service.getMembers=function () {
             return $http({
@@ -48,23 +49,26 @@
                 url:'/shiftDetails'
             });
         };
-        service.getMembersInShift=function (shift,year,month,day) {
+        service.getMembersInShift=function (shiftDetails) {
             return $http({
                 method:'GET',
                 url:'/membersInShift',
                 params:{
-                  shift:shift,
-                  year:year,
-                  month:month,
-                  day:day
-              }
-          });
+                    shift:shiftDetails.shift,
+                    year:shiftDetails.year,
+                    month:shiftDetails.month,
+                    day:shiftDetails.day
+                }
+            });
         };
         return service;
+
     }])
     .controller('attendanceRecorderController', ['$scope','$rootScope','Service', function ($scope,$rootScope,Service) {
+
         $scope.error='';
         $scope.successMessage='';
+
         Service.getMembers()
         .then(function(response){
             $scope.error='';
@@ -73,6 +77,7 @@
             $scope.successMessage='';
             $scope.error=errorResponse.data;
         });
+
         $scope.submit=function () {
             $scope.error='';
             $scope.successMessage='';
@@ -90,61 +95,84 @@
                 });
             } 
         };
+
     }])
     .controller('RosterController', ['$scope','$rootScope','Service', function ($scope,$rootScope,Service) {
-        var updateMembersInShift=function (shift,year,month,day) {
-            if (arguments.length!=4) {
-                Service.getShiftDetails()
-                .then(function (response){
-                    var shift=$scope.shift=response.data.currentShift.shift;
-                    var year=response.data.currentShift.year;
-                    var month=response.data.currentShift.month;
-                    var day=response.data.currentShift.day;
-                    $scope.date=new Date(year,month,day);
-                    return Service.getMembersInShift(shift,year,month,day);
-                },function (errorResponse){
-                    console.log(errorResponse);
-                })
-                .then(function(response){
-                    $scope.membersInShift=response.data;
-                },function(errorResponse){
-                    console.log(errorResponse);
-                });
-            } else {
-                Service.getMembersInShift(shift,year,month,day)
-                .then(function(response){
-                    $scope.membersInShift=response.data;
-                },function(errorResponse){
-                    console.log(errorResponse);
-                });
-            }
+
+        var logResponseToConsole=function (response) {
+            console.log(response.data);
         };
+
+        var updateMembersInShift=function (shiftDetails) {
+            $scope.membersInCurrentShift=[];
+            $scope.membersInPreviousShift=[];
+            Service.getShiftDetails()
+            .then(function (response){
+                if (!shiftDetails || angular.equals(shiftDetails, response.data.currentShift)) {
+                    var currentShiftDetails=response.data.currentShift;
+                    var previousShiftDetails=response.data.previousShift;
+                    if (!shiftDetails) {
+                        $scope.date=new Date(currentShiftDetails.year,currentShiftDetails.month,currentShiftDetails.day);
+                        $scope.shift=currentShiftDetails.shift;
+                    } 
+                    Service.getMembersInShift(currentShiftDetails)
+                    .then(function (response){
+                        $scope.membersInCurrentShift=response.data;
+                    },logResponseToConsole);
+                    if(!response.data.previousShiftEnded){
+                        Service.getMembersInShift(previousShiftDetails)
+                        .then(function (response){
+                            $scope.membersInPreviousShift=response.data;
+                        },logResponseToConsole);
+                    }
+                } else {
+                    $scope.membersInPreviousShift=[];
+                    Service.getMembersInShift(shiftDetails)
+                    .then(function (response){
+                        $scope.membersInCurrentShift=response.data;
+                    },logResponseToConsole);
+                }
+            },logResponseToConsole);
+        };
+
         updateMembersInShift();
+
         $scope.$watch('date', function(newDate) {
             if (newDate) {
-                var year=newDate.getFullYear();
-                var month=newDate.getMonth();
-                var day=newDate.getDate();
-                updateMembersInShift($scope.shift,year,month,day);
+                var shiftDetails={
+                    shift:$scope.shift,
+                    year:newDate.getFullYear(),
+                    month:newDate.getMonth(),
+                    day:newDate.getDate()
+                };
+                updateMembersInShift(shiftDetails);
             }
         });
+
         $scope.$watch('shift', function(newShift) {
             if (newShift) {
-                var year=$scope.date.getFullYear();
-                var month=$scope.date.getMonth();
-                var day=$scope.date.getDate();
-                updateMembersInShift(newShift,year,month,day);
+                var shiftDetails={
+                    shift:newShift,
+                    year:$scope.date.getFullYear(),
+                    month:$scope.date.getMonth(),
+                    day:$scope.date.getDate()
+                };
+                updateMembersInShift(shiftDetails);
             }
         });
+
         $rootScope.$on('attendance-entered', function(){
             updateMembersInShift();
         });
+
         $scope.openDatePicker = function($event) {
             $event.preventDefault();
             $event.stopPropagation();
             $scope.opened = true;
         };
+
         $scope.shifts=['S1','S2','S3'];
+
     }]);
     </script>
 </head>
@@ -164,37 +192,70 @@
                     </div>
                     <div class="col-md-1">
                         <select ng-model="shift" ng-options="shift as shift for shift in shifts" class="form-control shiftDropdown">
-				<option value="">Shift</option>
-			</select>
+                            <option value="">Shift</option>
+                        </select>
                     </div>
                 </div>
-                <table class="table table-striped table-condensed" ng-show="membersInShift.length">
-                    <thead>
-                        <tr>
-                            <th>Location</th>
-                            <th>Name</th>
-                            <th>User Name</th>
-                            <th>Tier</th>
-                            <th>Primary Module</th>
-                            <th>Secondary Module</th>
-                            <th>Phone 1</th>
-                            <th>Phone 2</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr ng-repeat="member in membersInShift | orderBy:'name'">
-                            <td>{{member.location}}</td>
-                            <td>{{member.name}}</td>
-                            <td>{{member.username}}</td>
-                            <td>{{member.tier}}</td>
-                            <td>{{member.module1}}</td>
-                            <td>{{member.module2}}</td>
-                            <td>{{member.phone1}}</td>
-                            <td>{{member.phone2}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <alert class="col-md-5" ng-show="!membersInShift.length" type="info"><strong>No data available.</strong></alert>
+                <alert class="col-md-5" ng-show="!membersInCurrentShift.length && !membersInPreviousShift.length" type="info"><strong>No data available.</strong></alert>
+                <accordion close-others="false" ng-show="membersInCurrentShift.length || membersInPreviousShift.length">
+                    <accordion-group heading="Members in shift" is-open="true">
+                        <table class="table table-striped table-condensed" ng-show="membersInCurrentShift.length">
+                            <thead>
+                                <tr>
+                                    <th>Location</th>
+                                    <th>Name</th>
+                                    <th>User Name</th>
+                                    <th>Tier</th>
+                                    <th>Primary Module</th>
+                                    <th>Secondary Module</th>
+                                    <th>Phone 1</th>
+                                    <th>Phone 2</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="member in membersInCurrentShift | orderBy:'name'">
+                                    <td>{{member.location}}</td>
+                                    <td>{{member.name}}</td>
+                                    <td>{{member.username}}</td>
+                                    <td>{{member.tier}}</td>
+                                    <td>{{member.module1}}</td>
+                                    <td>{{member.module2}}</td>
+                                    <td>{{member.phone1}}</td>
+                                    <td>{{member.phone2}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <span ng-show="!membersInCurrentShift.length">There are no members in the selected shift.</span>
+                    </accordion-group>
+                    <accordion-group heading="Members available from previous shift" is-open="true" ng-show="membersInPreviousShift.length">
+                        <table class="table table-striped table-condensed">
+                            <thead>
+                                <tr>
+                                    <th>Location</th>
+                                    <th>Name</th>
+                                    <th>User Name</th>
+                                    <th>Tier</th>
+                                    <th>Primary Module</th>
+                                    <th>Secondary Module</th>
+                                    <th>Phone 1</th>
+                                    <th>Phone 2</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr ng-repeat="member in membersInPreviousShift | orderBy:'name'">
+                                    <td>{{member.location}}</td>
+                                    <td>{{member.name}}</td>
+                                    <td>{{member.username}}</td>
+                                    <td>{{member.tier}}</td>
+                                    <td>{{member.module1}}</td>
+                                    <td>{{member.module2}}</td>
+                                    <td>{{member.phone1}}</td>
+                                    <td>{{member.phone2}}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </accordion-group>
+                </accordian>
             </form>
         </tab>
         <tab heading="Record Attendance" ng-controller="attendanceRecorderController">

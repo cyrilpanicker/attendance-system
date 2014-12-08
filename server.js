@@ -1,16 +1,22 @@
+
 var express=require('express');
 var bodyParser=require('body-parser');
 var Db = require('mongodb').Db;
 var Server = require('mongodb').Server;
 var ObjectID = require('mongodb').ObjectID;
+
 var app=express();
+
 app.use(bodyParser.json());
+
 app.use(express.static('public'));
-var db=new Db('dashDb',new Server('localhost',27017),{safe:false});
+
+var db=new Db('dashDb',new Server('localhost',27017),{safe:true});
 db.open(function (error,db) {
 	if (error) {
 		console.log('error occured while opening connection to database');
 	} else {
+
 		app.get('/members',function (request,response) {
 			db.collection('members').find().toArray(function (error,members) {
 				if (error) {
@@ -22,12 +28,15 @@ db.open(function (error,db) {
 				}
 			});
 		});
+
 		app.post('/enter',function (request,response) {
+
 			var shiftDetails=getShiftDetails();
 			var shift=shiftDetails.currentShift.shift;
 			var year=shiftDetails.currentShift.year;
 			var month=shiftDetails.currentShift.month;
 			var day=shiftDetails.currentShift.day;
+
 			var shiftTimings=getShiftTimings(shift,year,month,day);
 			db.collection('entries').findOne({"date":{"$gte":shiftTimings.fromTime,"$lt":shiftTimings.toTime},"memberId":request.body.memberId},function (error,entries) {
 				if (error) {
@@ -51,9 +60,11 @@ db.open(function (error,db) {
 				} 
 			});
 		});
+
 		app.get('/shiftDetails',function (request,response) {
 			response.send(getShiftDetails());
 		});
+
 		app.get('/membersInShift',function (request,response) {
 			var shift=request.query.shift;
 			var year=request.query.year;
@@ -90,46 +101,89 @@ db.open(function (error,db) {
 				};
 			});
 		});
+
 		app.listen(8000,function () {
 			console.log('server listening at port 8000');
 		});
 	}
 });
+
 var addDays=function(date, days) {
 	var result = new Date(date);
 	result.setDate(date.getDate() + days);
 	return result;
 };
+
 var getShiftDetails=function () {
+
 	var shiftDetails={};
 	shiftDetails.currentShift={};
 	shiftDetails.previousShift={};
+	shiftDetails.previousShiftEnded=true;
+
 	var date=new Date();
 	var year=date.getFullYear();
 	var month=date.getMonth();
 	var day=date.getDate();
+
 	var zero=new Date(year,month,day,0,0);
 	var three=new Date(year,month,day,3,0);
+	var fourAndQuarter=new Date(year,month,day,4,15);	
 	var tenAndQuarter=new Date(year,month,day,10,15);
+	var twelveAndQuarter=new Date(year,month,day,12,15);
 	var nineteen=new Date(year,month,day,19,0);
+	var nineteenAndHalf=new Date(year,month,day,19,30);
 	var zeroNext=addDays(new Date(year,month,day,0,0),1);
+
+	var setDateForCurrentShift=function (date) {
+		shiftDetails.currentShift.year=date.getFullYear();
+		shiftDetails.currentShift.month=date.getMonth();
+		shiftDetails.currentShift.day=date.getDate();
+	};
+
+	var setDateForPreviousShift=function (date) {
+		shiftDetails.previousShift.year=date.getFullYear();
+		shiftDetails.previousShift.month=date.getMonth();
+		shiftDetails.previousShift.day=date.getDate();
+	};
+
 	if (date>=zero && date<three) {
 		shiftDetails.currentShift.shift='S3';
-		date=addDays(date,-1);
-	} else if (date>=three && date<tenAndQuarter) {
+		setDateForCurrentShift(addDays(date,-1));
+	} else if (date>=three && date<fourAndQuarter) {
+		shiftDetails.previousShiftEnded=false;
 		shiftDetails.currentShift.shift='S1';
-	} else if (date>=tenAndQuarter && date<nineteen) {
+		shiftDetails.previousShift.shift='S3';
+		setDateForCurrentShift(date);
+		setDateForPreviousShift(addDays(date,-1));
+	} else if (date>=fourAndQuarter && date<tenAndQuarter) {
+		shiftDetails.currentShift.shift='S1';
+		setDateForCurrentShift(date);
+	} else if (date>=tenAndQuarter && date<twelveAndQuarter) {
+		shiftDetails.previousShiftEnded=false;
 		shiftDetails.currentShift.shift='S2';
-	} else if (date>=nineteen && date<zeroNext) {
+		shiftDetails.previousShift.shift='S1';
+		setDateForCurrentShift(date);
+		setDateForPreviousShift(date);
+	} else if (date>=twelveAndQuarter && date<nineteen) {
+		shiftDetails.currentShift.shift='S2';
+		setDateForCurrentShift(date);
+	} else if (date>=nineteen && date<nineteenAndHalf) {
+		shiftDetails.previousShiftEnded=false;
 		shiftDetails.currentShift.shift='S3';
+		shiftDetails.previousShift.shift='S2';
+		setDateForCurrentShift(date);
+		setDateForPreviousShift(date);
+	} else if (date>=nineteenAndHalf && date<zeroNext) {
+		shiftDetails.currentShift.shift='S3';
+		setDateForCurrentShift(date);
 	} else {
 		console.log('error in determining shift details');
 	}
-	shiftDetails.currentShift.year=date.getFullYear();
-	shiftDetails.currentShift.month=date.getMonth();
-	shiftDetails.currentShift.day=date.getDate();
+
 	return shiftDetails;
 };
+
 var getShiftTimings=function (shift,year,month,day) {
 	var shiftTimings={};
 	switch(shift){
