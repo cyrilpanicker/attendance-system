@@ -1,0 +1,13 @@
+{
+  "name": "memberDash",
+  "version": "0.0.1",
+  "description": "application to track members in a give shift",
+  "author": "cyril panicker",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "~1.10.0",
+    "express": "~4.10.4",
+    "express-json": "~1.0.0",
+    "mongodb": "~1.4.22"
+  }
+}
