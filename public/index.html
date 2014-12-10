@@ -61,6 +61,19 @@
                 }
             });
         };
+        service.deleteEntry=function (shiftDetails,memberId) {
+            return $http({
+                method:'POST',
+                url:'/deleteEntry',
+                data:{
+                    shift:shiftDetails.shift,
+                    year:shiftDetails.year,
+                    month:shiftDetails.month,
+                    day:shiftDetails.day,
+                    memberId:memberId
+                }
+            });
+        };
         return service;
 
     }])
@@ -104,6 +117,7 @@
         };
 
         var updateMembersInShift=function (shiftDetails) {
+            $scope.errorMessage='';
             $scope.membersInCurrentShift=[];
             $scope.membersInPreviousShift=[];
             Service.getShiftDetails()
@@ -165,6 +179,20 @@
             updateMembersInShift();
         });
 
+        $scope.deleteEntry=function (memberId) {
+            Service.deleteEntry({
+                shift:$scope.shift,
+                year:$scope.date.getFullYear(),
+                month:$scope.date.getMonth(),
+                day:$scope.date.getDate()
+            },memberId)
+            .then(function (response){
+                updateMembersInShift();
+            },function (errorResponse){
+                $scope.errorMessage=errorResponse.data;
+            });
+        };
+
         $scope.openDatePicker = function($event) {
             $event.preventDefault();
             $event.stopPropagation();
@@ -210,6 +238,7 @@
                                     <th>Secondary Module</th>
                                     <th>Phone 1</th>
                                     <th>Phone 2</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -222,10 +251,16 @@
                                     <td>{{member.module2}}</td>
                                     <td>{{member.phone1}}</td>
                                     <td>{{member.phone2}}</td>
+                                    <td>
+                                        <button ng-click="deleteEntry(member._id)" class="btn btn-success btn-sm">
+                                            Delete
+                                        </button>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
                         <span ng-show="!membersInCurrentShift.length">There are no members in the selected shift.</span>
+                        <alert class="col-md-5" ng-show="errorMessage" type="danger"><strong>{{errorMessage}}</strong></alert>
                     </accordion-group>
                     <accordion-group heading="Members available from previous shift" is-open="true" ng-show="membersInPreviousShift.length">
                         <table class="table table-striped table-condensed">
