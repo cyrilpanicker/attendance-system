@@ -17,9 +17,13 @@
         padding-top: 30px;
         padding-left: 10px;
         color:rgb(60, 118, 65);
+        text-align: center;
     }
     .shiftDropdown{
         width: 76px;
+    }
+    .alertClass{
+        margin-left: 22%;
     }
     </style>
     <script>
@@ -49,6 +53,17 @@
                 url:'/shiftDetails'
             });
         };
+
+        service.authorizeRosterEdit=function (passphrase) {
+            return $http({
+                method:'POST',
+                url:'/authorizeRosterEdit',
+                data:{
+                    passphrase:passphrase
+                }
+            })
+        };
+
         service.getMembersInShift=function (shiftDetails) {
             return $http({
                 method:'GET',
@@ -94,7 +109,7 @@
         $scope.submit=function () {
             $scope.error='';
             $scope.successMessage='';
-            if ($scope.data && $scope.data.memberId) {
+            if ($scope.data && $scope.data.memberId && $scope.data.passphrase) {
                 Service.enterAttendance($scope.data)
                 .then(function(response){
                     $scope.error='';
@@ -111,7 +126,8 @@
 
     }])
     .controller('RosterController', ['$scope','$rootScope','Service', function ($scope,$rootScope,Service) {
-
+         
+         $scope.editresetbutton="Edit Roster";
         var logResponseToConsole=function (response) {
             console.log(response.data);
         };
@@ -202,6 +218,24 @@
             });
         };
 
+        $scope.authorizeRosterEdit=function (passphrase) {
+            if($scope.editresetbutton && $scope.editresetbutton != "Reset"){
+            Service.authorizeRosterEdit(passphrase)
+            .then(function (response) {
+                $scope.isDeleteShow = true;
+                $scope.errorMessage="";
+                $scope.adminPassword="";
+                $scope.editresetbutton="Reset";
+            },function(errorResponse){
+                $scope.errorMessage=errorResponse.data;
+            });  
+          }  
+          else{
+            $scope.isDeleteShow = false;
+            $scope.editresetbutton="Edit Roster"
+          }   
+        };
+
         $scope.openDatePicker = function($event) {
             $event.preventDefault();
             $event.stopPropagation();
@@ -232,10 +266,18 @@
                             <option value="">Shift</option>
                         </select>
                     </div>
-                     <div class="btn-group" style="float:right;" 
-                        ng-show="membersInCurrentShift.length || membersInPreviousShift.length">
-                        <button type="button" class="btn btn-info" ng-click="editFuction()">Edit</button>
-                   </div> 
+                     <div class="input-group" ng-show="membersInCurrentShift.length || membersInPreviousShift.length">
+                     <div class="row input-group">  
+                        <div class="col-lg-5">
+                                <div class="input-group" style="position: relative; right: -150%;">
+                              <input name="adminPass" type="password" class="form-control" placeholder="Enter the admin passpharse" ng-model="adminPassword" ng-required="true" close-text="Close" />
+                             <span class="input-group-btn">
+                              <button type="button" class="btn btn-info" ng-disabled="frmShiftPlan.adminPass.$error.required && editresetbutton!=='Reset' "  ng-click="authorizeRosterEdit(adminPassword)">{{editresetbutton}}</button>
+                       </span>
+                     </div>
+                  </div>
+                </div> 
+              </div>
                 </div>
                 <alert class="col-md-5" ng-show="!membersInCurrentShift.length && !membersInPreviousShift.length" type="info"><strong>No data available.</strong></alert>
                 <accordion close-others="false" ng-show="membersInCurrentShift.length || membersInPreviousShift.length">
@@ -273,7 +315,7 @@
                             </tbody>
                         </table>
                         <span ng-show="!membersInCurrentShift.length">There are no members in the selected shift.</span>
-                        <alert class="col-md-5" ng-show="errorMessage" type="danger"><strong>{{errorMessage}}</strong></alert>
+                        <alert class="col-md-6 alertClass" ng-show="errorMessage" type="danger" style="text-align:center"><strong>{{errorMessage}}</strong></alert>
                     </accordion-group>
                     <accordion-group heading="Members available from previous shift" is-open="true" ng-show="membersInPreviousShift.length">
                         <table class="table table-striped table-condensed">
@@ -313,8 +355,13 @@
                         <option value=''>Select Name</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-success">Record Attendance</button><br/>
+                <div class="col-md-4">
+                    <p class="input-group">
+                        <input type="password" name="pwdPassphrase" class="form-control" ng-required="true" ng-model="data.passphrase" placeholder="Enter Passphrase"/>
+                        <span class="input-group-btn">
+                            <button ng-disabled="frmAttendanceRecorder.pwdPassphrase.$error.required" type="submit" class="btn btn-success">Record Attendance</button><br/>
+                        </span>
+                    </p>
                 </div>
             </form>
             <alert class="col-md-5" ng-show="successMessage" type="success"><strong>{{successMessage}}</strong></alert>
