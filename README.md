@@ -41,5 +41,3 @@ the command should be run from `attendanceSystem` root folder.
 
 
 * point browser to `http://127.0.0.1:8000/`.
-
-*
