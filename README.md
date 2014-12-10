@@ -40,4 +40,9 @@ the command should be run from `attendanceSystem` root folder.
 the command should be run from `attendanceSystem` root folder.  
 
 
-* point browser to `http://127.0.0.1:8000/`.
+* point browser to `http://127.0.0.1:8000/`.  
+
+
+***Quick tips***
+* command to export members collection to csv file:  
+`mongoexport -d dashDb -c members -f "_id,name" -o memberName.csv --csv`
