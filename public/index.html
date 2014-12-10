@@ -49,6 +49,17 @@
                 url:'/shiftDetails'
             });
         };
+
+        service.authorizeRosterEdit=function (passphrase) {
+            return $http({
+                method:'POST',
+                url:'/authorizeRosterEdit',
+                data:{
+                    passphrase:passphrase
+                }
+            })
+        };
+
         service.getMembersInShift=function (shiftDetails) {
             return $http({
                 method:'GET',
@@ -202,6 +213,15 @@
             });
         };
 
+        $scope.authorizeRosterEdit=function (passphrase) {
+            Service.authorizeRosterEdit(passphrase)
+            .then(function (response) {
+                //TODO
+            },function(errorResponse){
+                $scope.errorMessage=errorResponse.data;
+            });
+        };
+
         $scope.openDatePicker = function($event) {
             $event.preventDefault();
             $event.stopPropagation();
@@ -232,10 +252,10 @@
                             <option value="">Shift</option>
                         </select>
                     </div>
-                     <div class="btn-group" style="float:right;" 
+                    <div class="btn-group" style="float:right;" 
                         ng-show="membersInCurrentShift.length || membersInPreviousShift.length">
                         <button type="button" class="btn btn-info" ng-click="editFuction()">Edit</button>
-                   </div> 
+                    </div> 
                 </div>
                 <alert class="col-md-5" ng-show="!membersInCurrentShift.length && !membersInPreviousShift.length" type="info"><strong>No data available.</strong></alert>
                 <accordion close-others="false" ng-show="membersInCurrentShift.length || membersInPreviousShift.length">

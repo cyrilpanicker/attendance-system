@@ -29,6 +29,22 @@ db.open(function (error,db) {
 			});
 		});
 
+		app.post('/authorizeRosterEdit',function (request,response) {
+			db.collection('passphrases').findOne({"memberId":"admin"},function (error,admin) {
+				if (error) {
+					response.status(500).send('Database error occured while fetching passphrase details.');
+				} else if (!admin) {
+					response.status(500).send('There is no admin user in database.');
+				} else if (admin.passphrase!=request.body.passphrase) {
+					response.status(409).send('Passphrase incorrect. You are not authorized to edit the roster.');
+				} else if (admin.passphrase==request.body.passphrase) {
+					response.send('Authorization succeeded.');
+				} else {
+					response.status(500).send('Unexpected error occured at server.');
+				}
+			});
+		});
+
 		app.post('/enter',function (request,response) {
 
 			var shiftDetails=getShiftDetails();
@@ -78,7 +94,7 @@ db.open(function (error,db) {
 				"memberId":request.body.memberId
 			},function (error,result) {
 				if (error) {
-					response.status(500).send('Database error occured while fetching member details.');
+					response.status(500).send('Database error occured while removing entry.');
 				} else {
 					response.send("Entry deleted successfully");
 				}
