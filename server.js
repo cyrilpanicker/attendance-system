@@ -145,7 +145,7 @@ db.open(function (error,db) {
 				} 
 				for (var i = entries.length - 1; i >= 0; i--) {
 					var counter=0;
-					db.collection('members').findOne({"_id":ObjectID(entries[i].memberId)},function (error,member) {
+					db.collection('members').findOne({"_id":entries[i].memberId},function (error,member) {
 						counter++;
 						if (error) {
 							errorOccured=true;
