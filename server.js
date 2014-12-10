@@ -61,6 +61,31 @@ db.open(function (error,db) {
 			});
 		});
 
+		app.post('/deleteEntry',function (request,response) {
+
+			var shift=request.body.shift;
+			var year=request.body.year;
+			var month=request.body.month;
+			var day=request.body.day;
+
+			var shiftTimings=getShiftTimings(shift,year,month,day);
+
+			db.collection('entries').remove({
+				"date":{
+					"$gte":shiftTimings.fromTime,
+					"$lt":shiftTimings.toTime
+				},
+				"memberId":request.body.memberId
+			},function (error,result) {
+				if (error) {
+					response.status(500).send('Database error occured while fetching member details.');
+				} else {
+					response.send("Entry deleted successfully");
+				}
+			});
+
+		});
+
 		app.get('/shiftDetails',function (request,response) {
 			response.send(getShiftDetails());
 		});
