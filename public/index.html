@@ -105,7 +105,7 @@
         $scope.submit=function () {
             $scope.error='';
             $scope.successMessage='';
-            if ($scope.data && $scope.data.memberId) {
+            if ($scope.data && $scope.data.memberId && $scope.data.passphrase) {
                 Service.enterAttendance($scope.data)
                 .then(function(response){
                     $scope.error='';
@@ -333,8 +333,13 @@
                         <option value=''>Select Name</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-success">Record Attendance</button><br/>
+                <div class="col-md-4">
+                    <p class="input-group">
+                        <input type="password" name="pwdPassphrase" class="form-control" ng-required="true" ng-model="data.passphrase" placeholder="Enter Passphrase"/>
+                        <span class="input-group-btn">
+                            <button ng-disabled="frmAttendanceRecorder.pwdPassphrase.$error.required" type="submit" class="btn btn-success">Record Attendance</button><br/>
+                        </span>
+                    </p>
                 </div>
             </form>
             <alert class="col-md-5" ng-show="successMessage" type="success"><strong>{{successMessage}}</strong></alert>

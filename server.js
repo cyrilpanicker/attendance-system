@@ -34,13 +34,13 @@ db.open(function (error,db) {
 				if (error) {
 					response.status(500).send('Database error occured while fetching passphrase details.');
 				} else if (!admin) {
-					response.status(500).send('There is no admin user in database.');
+					response.status(409).send('There is no admin user in database.');
 				} else if (admin.passphrase!=request.body.passphrase) {
 					response.status(409).send('Passphrase incorrect. You are not authorized to edit the roster.');
 				} else if (admin.passphrase==request.body.passphrase) {
 					response.send('Authorization succeeded.');
 				} else {
-					response.status(500).send('Unexpected error occured at server.');
+					response.status(500).send('Unexpected error occured while authorizing request.');
 				}
 			});
 		});
@@ -54,26 +54,48 @@ db.open(function (error,db) {
 			var day=shiftDetails.currentShift.day;
 
 			var shiftTimings=getShiftTimings(shift,year,month,day);
-			db.collection('entries').findOne({"date":{"$gte":shiftTimings.fromTime,"$lt":shiftTimings.toTime},"memberId":request.body.memberId},function (error,entries) {
+
+
+			db.collection('passphrases').findOne({
+				"memberId":request.body.memberId
+			},function (error,member) {
 				if (error) {
-					console.log('Database error occured while fetching member details.');
-					response.status(500).send('Database error occured while fetching member details.');
-				} else if (entries) {
-					response.status(409).send('Attendance is already recorded for '+shift+' shift.');
-				} else {
-					var entry={};
-					entry.memberId=request.body.memberId;
-					entry.date=new Date();
-					db.collection('entries').insert(entry,function(error,result){
+					response.status(500).send('Database error occured while fetching passphrase details.');
+				} else if (!member) {
+					response.status(409).send('Passphrase has not been setup for the member.');
+				} else if (member.passphrase!=request.body.passphrase) {
+					response.status(409).send('Passphrase incorrect. Please try again with correct passphrase.');
+				} else if (member.passphrase==request.body.passphrase) {
+					db.collection('entries').findOne({
+						"date":{
+							"$gte":shiftTimings.fromTime,
+							"$lt":shiftTimings.toTime
+						},
+						"memberId":request.body.memberId
+					},function (error,entries) {
 						if (error) {
-							console.log('Database error occured while inserting entry.');
-							response.status(500).send('Database error occured while inserting entry.');
+							console.log('Database error occured while fetching member details.');
+							response.status(500).send('Database error occured while fetching member details.');
+						} else if (entries) {
+							response.status(409).send('Attendance is already recorded for '+shift+' shift.');
 						} else {
-							console.log("Attendance recorded successfully for "+shift+" shift.");
-							response.send("Attendance recorded successfully for "+shift+" shift.");
-						}
+							var entry={};
+							entry.memberId=request.body.memberId;
+							entry.date=new Date();
+							db.collection('entries').insert(entry,function(error,result){
+								if (error) {
+									console.log('Database error occured while inserting entry.');
+									response.status(500).send('Database error occured while inserting entry.');
+								} else {
+									console.log("Attendance recorded successfully for "+shift+" shift.");
+									response.send("Attendance recorded successfully for "+shift+" shift.");
+								}
+							});
+						} 
 					});
-				} 
+				} else {
+					response.status(500).send('Unexpected error occured while authorizing request.');
+				}
 			});
 		});
 
