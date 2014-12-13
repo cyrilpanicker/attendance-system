@@ -281,7 +281,7 @@
                     </div>
                     <div class="col-md-4 pull-right" ng-show="membersInCurrentShift.length">
                         <p class="input-group">
-                            <input name="adminPass" type="password" class="form-control" placeholder="Enter admin passpharse" ng-model="adminPassword" ng-required="true" close-text="Close" />
+                            <input name="adminPass" type="password" class="form-control" placeholder="Enter admin passphrase" ng-model="adminPassword" ng-required="true" close-text="Close" />
                             <span class="input-group-btn">
                                 <button type="button" class="btn btn-info" ng-disabled="frmShiftPlan.adminPass.$error.required && editresetbutton!=='Reset' "  ng-click="authorizeRosterEdit(adminPassword)">{{editresetbutton}}</button>
                             </span>
@@ -357,24 +357,26 @@
                 </accordian>
             </form>
         </tab>
-        <tab heading="Record Attendance" ng-controller="attendanceRecorderController">
-            <form name="frmAttendanceRecorder"  ng-submit="submit()" class="row panel-body" novalidate>
-                <div class="col-md-3">
-                    <select ng-model="data.memberId" ng-options="member._id as member.name for member in members | orderBy:'name'" name="selName" class="form-control" ng-change="error='';successMessage=''">
-                        <option value=''>Select Name</option>
-                    </select>
+        <tab heading="Record Attendance">
+            <form class="panel-body" name="frmAttendanceRecorder" ng-controller="attendanceRecorderController"  ng-submit="submit()" novalidate>
+                <div class="row">
+                   <div class="col-md-3">
+                        <select ng-model="data.memberId" ng-options="member._id as member.name for member in members | orderBy:'name'" name="selName" class="form-control" ng-change="error='';successMessage=''">
+                            <option value=''>Select Name</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="input-group">
+                            <input type="password" name="pwdPassphrase" class="form-control" ng-required="true" ng-model="data.passphrase" placeholder="Enter passphrase"/>
+                            <span class="input-group-btn">
+                                <button id="recordAttendanceButton" ng-disabled="frmAttendanceRecorder.pwdPassphrase.$error.required" type="submit" class="btn btn-success">Record Attendance</button><br/>
+                            </span>
+                        </p>
+                    </div>
                 </div>
-                <div class="col-md-4">
-                    <p class="input-group">
-                        <input type="password" name="pwdPassphrase" class="form-control" ng-required="true" ng-model="data.passphrase" placeholder="Enter passphrase"/>
-                        <span class="input-group-btn">
-                            <button id="recordAttendanceButton" ng-disabled="frmAttendanceRecorder.pwdPassphrase.$error.required" type="submit" class="btn btn-success">Record Attendance</button><br/>
-                        </span>
-                    </p>
-                </div>
+                <alert class="col-md-5" ng-show="successMessage" type="success"><strong>{{successMessage}}</strong></alert>
+                <alert class="col-md-6" ng-show="error" type="danger"><strong>{{error}}</strong></alert>
             </form>
-            <alert class="col-md-5" ng-show="successMessage" type="success"><strong>{{successMessage}}</strong></alert>
-            <alert class="col-md-5" ng-show="error" type="danger"><strong>{{error}}</strong></alert>
         </tab>
     </tabset>
 </body>
