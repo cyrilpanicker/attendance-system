@@ -1,4 +1,3 @@
-
 var express=require('express');
 var bodyParser=require('body-parser');
 var Db = require('mongodb').Db;
@@ -28,6 +27,93 @@ db.open(function (error,db) {
 				}
 			});
 		});
+
+		app.post('/updateOwner',function (request,response) {
+
+			db.collection('passphrases').findOne({
+				"memberId":request.body.memberId
+			},function (error,member) {
+				if (error) {
+					response.status(500).send('Database error occured while fetching passphrase details.');
+				} else if (!member) {
+					response.status(409).send('Passphrase has not been setup for the member.');
+				} else if (member.passphrase!=request.body.passphrase) {
+					response.status(409).send('Passphrase incorrect. Please try again with correct passphrase.');
+				} else if (member.passphrase==request.body.passphrase) {
+					db.collection('owners').findOne({
+						"shift":request.body.shift,
+						"year":request.body.year,
+						"month":request.body.month,
+						"day":request.body.day
+					},function (error,owner) {
+						if (error) {
+							response.status(500).send('Database error occured while fetching shift owner details.');
+						} else if (owner) {
+							db.collection('owners').update(owner,{
+								$set:{
+									"memberId":request.body.memberId
+								}
+							},function (error) {
+								if (error) {
+									response.status(500).send('Database error occured while updating shift-owner details');
+								} else {
+									response.send("Shift-owner details have been updated.");
+								}
+							})
+						} else {
+							db.collection('owners').insert({
+								"shift":request.body.shift,
+								"year":request.body.year,
+								"month":request.body.month,
+								"day":request.body.day,
+								"memberId":request.body.memberId
+							},function (error) {
+								if (error) {
+									response.status(500).send('Database error occured while updating shift-owner details');
+								} else {
+									response.send("Shift-owner details have been updated.");
+								}
+							});
+						}
+					});
+				} else {
+					response.status(500).send('Unexpected error occured while authorizing request.');
+				}
+			});
+		});
+
+	 app.get('/getOwner',function (request,response) {
+         db.collection('owners').findOne({
+             "shift":request.query.shift,
+             "year":parseInt(request.query.year),
+             "month":parseInt(request.query.month),
+             "day":parseInt(request.query.day)
+        },function (error,owner) {
+       if (error) {
+        response.status(500).send('Database error occured while fetching owner details.');
+         console.log(error);
+        } else if (!owner) {
+        response.send(null);
+        console.log(null);
+        } else {
+       db.collection('members').findOne({
+        "_id":owner.memberId
+       },function (error,member) {
+       if (error) {
+          response.status(500).send('Database error occured while fetching member details.');
+          console.log(error);
+          } else if (!member) {
+          response.status(500).send('Member details were not found for shift owner');
+          console.log("Member details were not found for shift owner");
+        } else {
+         response.send(member.name);
+         console.log("Success");
+        }
+      });
+     }
+   });
+ });
+
 
 		app.post('/authorizeRosterEdit',function (request,response) {
 			db.collection('passphrases').findOne({"memberId":"admin"},function (error,admin) {
