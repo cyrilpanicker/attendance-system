@@ -191,7 +191,7 @@
 								}, logResponseToConsole);
 							Service.getOwner(currentShiftDetails)
 								.then(function(response) {
-									$scope.currentShiftOwner = response.data;
+									$scope.currentShiftOwner = response.data.name;
 								}, function(errorResponse) {
 									$scope.currentShiftOwner = '';
 								});
@@ -202,7 +202,7 @@
 									}, logResponseToConsole);
 								Service.getOwner(previousShiftDetails)
 									.then(function(response) {
-										$scope.previousShiftOwner = response.data;
+										$scope.previousShiftOwner = response.data.name;
 									}, function(errorResponse) {
 										$scope.previousShiftOwner = '';
 									});
@@ -217,7 +217,7 @@
 								}, logResponseToConsole);
 							Service.getOwner(shiftDetails)
 								.then(function(response) {
-									$scope.currentShiftOwner = response.data;
+									$scope.currentShiftOwner = response.data.name;
 								}, function(errorResponse) {
 									$scope.currentShiftOwner = '';
 								});

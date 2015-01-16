@@ -2,6 +2,7 @@ var express=require('express');
 var bodyParser=require('body-parser');
 var Db = require('mongodb').Db;
 var Server = require('mongodb').Server;
+var service=require('./service');
 var ObjectID = require('mongodb').ObjectID;
 
 var app=express();
@@ -82,38 +83,51 @@ db.open(function (error,db) {
 			});
 		});
 
+		// app.get('/getOwner',function (request,response) {
+		// 	db.collection('owners').findOne({
+		// 		"shift":request.query.shift,
+		// 		"year":parseInt(request.query.year),
+		// 		"month":parseInt(request.query.month),
+		// 		"day":parseInt(request.query.day)
+		// 	},function (error,owner) {
+		// 		if (error) {
+		// 			response.status(500).send('Database error occured while fetching owner details.');
+		// 			console.log(error);
+		// 		} else if (!owner) {
+		// 			response.send(null);
+		// 			console.log(null);
+		// 		} else {
+		// 			db.collection('members').findOne({
+		// 				"_id":owner.memberId
+		// 			},function (error,member) {
+		// 				if (error) {
+		// 					response.status(500).send('Database error occured while fetching member details.');
+		// 					console.log(error);
+		// 				} else if (!member) {
+		// 					response.status(500).send('Member details were not found for shift owner');
+		// 					console.log("Member details were not found for shift owner");
+		// 				} else {
+		// 					response.send(member.name);
+		// 					console.log("Success");
+		// 				}
+		// 			});
+		// 		}
+		// 	});
+		// });
+
 		app.get('/getOwner',function (request,response) {
-			db.collection('owners').findOne({
+			service.getOwner(db,{
 				"shift":request.query.shift,
 				"year":parseInt(request.query.year),
 				"month":parseInt(request.query.month),
 				"day":parseInt(request.query.day)
-			},function (error,owner) {
-				if (error) {
-					response.status(500).send('Database error occured while fetching owner details.');
-					console.log(error);
-				} else if (!owner) {
-					response.send(null);
-					console.log(null);
-				} else {
-					db.collection('members').findOne({
-						"_id":owner.memberId
-					},function (error,member) {
-						if (error) {
-							response.status(500).send('Database error occured while fetching member details.');
-							console.log(error);
-						} else if (!member) {
-							response.status(500).send('Member details were not found for shift owner');
-							console.log("Member details were not found for shift owner");
-						} else {
-							response.send(member.name);
-							console.log("Success");
-						}
-					});
-				}
+			})
+			.then(function (owner){
+				response.send(owner);
+			},function (error){
+				response.status(500).send(error);
 			});
 		});
-
 
 		app.post('/authorizeRosterEdit',function (request,response) {
 			db.collection('passphrases').findOne({"memberId":"admin"},function (error,admin) {
@@ -355,6 +369,10 @@ var getShiftTimings=function (shift,year,month,day) {
 	return shiftTimings;
 };
 
+var getOwner=function () {
+	
+}
+
 var getOwnerReport=function (startDate,endDate) {
 
 	var report=[];
@@ -370,7 +388,7 @@ var getOwnerReport=function (startDate,endDate) {
 	var startDate=new Date(startYear,startMonth,startDate);
 	var endDate=new Date(endYear,endMonth,endDate);
 
-	for(var date=startDate){
+	for(var date=startDate; date <= endDate; date=addDays(date,1)){
 
 	}
 
