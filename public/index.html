@@ -228,139 +228,139 @@
 
 			updateMembersInShift();
 
-			var createReportNew = function(newDetails) {
-				var totalFE = 0;
-				var totalSal = 0;
-				var totalUC = 0;
-				var totalUPAS = 0;
-				$scope.totalS1 = 0;
-				$scope.totalS2 = 0;
-				$scope.totalS3 = 0;
+			// var createReportNew = function(newDetails) {
+			// 	var totalFE = 0;
+			// 	var totalSal = 0;
+			// 	var totalUC = 0;
+			// 	var totalUPAS = 0;
+			// 	$scope.totalS1 = 0;
+			// 	$scope.totalS2 = 0;
+			// 	$scope.totalS3 = 0;
 
-				if (newDetails) {
-					$scope.showReport = false;
-					newDetails.shift = "S1";
-					Service.getMembersInShift(newDetails)
-						.then(function(response) {
-							console.log("S1 Members -->" + response);
-							var membersInshiftS1 = {};
-							membersInshiftS1.fe = 0;
-							membersInshiftS1.sal = 0;
-							membersInshiftS1.uc = 0;
-							membersInshiftS1.upas = 0;
-							var resData = response.data;
-							if (resData && resData.length > 0) {
-								$scope.showReport = true;
-								angular.forEach(resData, function(member) {
-									if (member.module1.toLowerCase() === "fe") {
-										membersInshiftS1.fe = membersInshiftS1.fe + 1;
-									} else if (member.module1.toLowerCase() === "sal") {
-										membersInshiftS1.sal = membersInshiftS1.sal + 1;
-									} else if (member.module1.toLowerCase() === "uc-up") {
-										membersInshiftS1.uc = membersInshiftS1.uc + 1;
-									} else if (member.module1.toLowerCase() === "upas") {
-										membersInshiftS1.upas = membersInshiftS1.upas + 1;
-									}
+			// 	if (newDetails) {
+			// 		$scope.showReport = false;
+			// 		newDetails.shift = "S1";
+			// 		Service.getMembersInShift(newDetails)
+			// 			.then(function(response) {
+			// 				console.log("S1 Members -->" + response);
+			// 				var membersInshiftS1 = {};
+			// 				membersInshiftS1.fe = 0;
+			// 				membersInshiftS1.sal = 0;
+			// 				membersInshiftS1.uc = 0;
+			// 				membersInshiftS1.upas = 0;
+			// 				var resData = response.data;
+			// 				if (resData && resData.length > 0) {
+			// 					$scope.showReport = true;
+			// 					angular.forEach(resData, function(member) {
+			// 						if (member.module1.toLowerCase() === "fe") {
+			// 							membersInshiftS1.fe = membersInshiftS1.fe + 1;
+			// 						} else if (member.module1.toLowerCase() === "sal") {
+			// 							membersInshiftS1.sal = membersInshiftS1.sal + 1;
+			// 						} else if (member.module1.toLowerCase() === "uc-up") {
+			// 							membersInshiftS1.uc = membersInshiftS1.uc + 1;
+			// 						} else if (member.module1.toLowerCase() === "upas") {
+			// 							membersInshiftS1.upas = membersInshiftS1.upas + 1;
+			// 						}
 
-								});
-							}
-							$scope.s1fe = membersInshiftS1.fe;
-							$scope.s1sal = membersInshiftS1.sal;
-							$scope.s1uc = membersInshiftS1.uc;
-							$scope.s1upas = membersInshiftS1.upas;
-							$scope.totalS1 = membersInshiftS1.fe + membersInshiftS1.sal + membersInshiftS1.uc + membersInshiftS1.upas;
-							totalFE = totalFE + membersInshiftS1.fe;
-							totalSal = totalSal + membersInshiftS1.sal;
-							totalUC = totalUC + membersInshiftS1.uc;
-							totalUPAS = totalUPAS + membersInshiftS1.upas;
-							updateTotalMembers(totalFE, totalSal, totalUC, totalUPAS);
+			// 					});
+			// 				}
+			// 				$scope.s1fe = membersInshiftS1.fe;
+			// 				$scope.s1sal = membersInshiftS1.sal;
+			// 				$scope.s1uc = membersInshiftS1.uc;
+			// 				$scope.s1upas = membersInshiftS1.upas;
+			// 				$scope.totalS1 = membersInshiftS1.fe + membersInshiftS1.sal + membersInshiftS1.uc + membersInshiftS1.upas;
+			// 				totalFE = totalFE + membersInshiftS1.fe;
+			// 				totalSal = totalSal + membersInshiftS1.sal;
+			// 				totalUC = totalUC + membersInshiftS1.uc;
+			// 				totalUPAS = totalUPAS + membersInshiftS1.upas;
+			// 				updateTotalMembers(totalFE, totalSal, totalUC, totalUPAS);
 
-						}, function(errorResponse) {
-							console.log(errorResponse);
-						});
+			// 			}, function(errorResponse) {
+			// 				console.log(errorResponse);
+			// 			});
 
-					newDetails.shift = "S2";
-					Service.getMembersInShift(newDetails)
-						.then(function(response) {
-							console.log("S2 Members -->" + response);
-							var membersInshiftS2 = {};
-							membersInshiftS2.fe = 0;
-							membersInshiftS2.sal = 0;
-							membersInshiftS2.uc = 0;
-							membersInshiftS2.upas = 0;
-							var resData1 = response.data;
-							if (resData1 && resData1.length > 0) {
-								$scope.showReport = true;
-								angular.forEach(resData1, function(member) {
-									if (member.module1.toLowerCase() === "fe") {
-										membersInshiftS2.fe = membersInshiftS2.fe + 1;
-									} else if (member.module1.toLowerCase() === "sal") {
-										membersInshiftS2.sal = membersInshiftS2.sal + 1;
-									} else if (member.module1.toLowerCase() === "uc-up") {
-										membersInshiftS2.uc = membersInshiftS2.uc + 1;
-									} else if (member.module1.toLowerCase() === "upas") {
-										membersInshiftS2.upas = membersInshiftS2.upas + 1;
-									}
+			// 		newDetails.shift = "S2";
+			// 		Service.getMembersInShift(newDetails)
+			// 			.then(function(response) {
+			// 				console.log("S2 Members -->" + response);
+			// 				var membersInshiftS2 = {};
+			// 				membersInshiftS2.fe = 0;
+			// 				membersInshiftS2.sal = 0;
+			// 				membersInshiftS2.uc = 0;
+			// 				membersInshiftS2.upas = 0;
+			// 				var resData1 = response.data;
+			// 				if (resData1 && resData1.length > 0) {
+			// 					$scope.showReport = true;
+			// 					angular.forEach(resData1, function(member) {
+			// 						if (member.module1.toLowerCase() === "fe") {
+			// 							membersInshiftS2.fe = membersInshiftS2.fe + 1;
+			// 						} else if (member.module1.toLowerCase() === "sal") {
+			// 							membersInshiftS2.sal = membersInshiftS2.sal + 1;
+			// 						} else if (member.module1.toLowerCase() === "uc-up") {
+			// 							membersInshiftS2.uc = membersInshiftS2.uc + 1;
+			// 						} else if (member.module1.toLowerCase() === "upas") {
+			// 							membersInshiftS2.upas = membersInshiftS2.upas + 1;
+			// 						}
 
-								});
-							}
-							$scope.s2fe = membersInshiftS2.fe;
-							$scope.s2sal = membersInshiftS2.sal;
-							$scope.s2uc = membersInshiftS2.uc;
-							$scope.s2upas = membersInshiftS2.upas;
-							$scope.totalS2 = membersInshiftS2.fe + membersInshiftS2.sal + membersInshiftS2.uc + membersInshiftS2.upas;
-							totalFE = totalFE + membersInshiftS2.fe;
-							totalSal = totalSal + membersInshiftS2.sal;
-							totalUC = totalUC + membersInshiftS2.uc;
-							totalUPAS = totalUPAS + membersInshiftS2.upas;
-							updateTotalMembers(totalFE, totalSal, totalUC, totalUPAS);
+			// 					});
+			// 				}
+			// 				$scope.s2fe = membersInshiftS2.fe;
+			// 				$scope.s2sal = membersInshiftS2.sal;
+			// 				$scope.s2uc = membersInshiftS2.uc;
+			// 				$scope.s2upas = membersInshiftS2.upas;
+			// 				$scope.totalS2 = membersInshiftS2.fe + membersInshiftS2.sal + membersInshiftS2.uc + membersInshiftS2.upas;
+			// 				totalFE = totalFE + membersInshiftS2.fe;
+			// 				totalSal = totalSal + membersInshiftS2.sal;
+			// 				totalUC = totalUC + membersInshiftS2.uc;
+			// 				totalUPAS = totalUPAS + membersInshiftS2.upas;
+			// 				updateTotalMembers(totalFE, totalSal, totalUC, totalUPAS);
 
-						}, function(errorResponse) {
-							console.log(errorResponse);
-						});
+			// 			}, function(errorResponse) {
+			// 				console.log(errorResponse);
+			// 			});
 
-					newDetails.shift = "S3";
-					Service.getMembersInShift(newDetails)
-						.then(function(response) {
-							console.log("S3 Members -->" + response);
-							var membersInshiftS3 = {};
-							membersInshiftS3.fe = 0;
-							membersInshiftS3.sal = 0;
-							membersInshiftS3.uc = 0;
-							membersInshiftS3.upas = 0;
-							var resData2 = response.data;
-							if (resData2 && resData2.length > 0) {
-								$scope.showReport = true;
-								angular.forEach(resData2, function(member) {
-									if (member.module1.toLowerCase() === "fe") {
-										membersInshiftS3.fe = membersInshiftS3.fe + 1;
-									} else if (member.module1.toLowerCase() === "sal") {
-										membersInshiftS3.sal = membersInshiftS3.sal + 1;
-									} else if (member.module1.toLowerCase() === "uc-up") {
-										membersInshiftS3.uc = membersInshiftS3.uc + 1;
-									} else if (member.module1.toLowerCase() === "upas") {
-										membersInshiftS3.upas = membersInshiftS3.upas + 1;
-									}
+			// 		newDetails.shift = "S3";
+			// 		Service.getMembersInShift(newDetails)
+			// 			.then(function(response) {
+			// 				console.log("S3 Members -->" + response);
+			// 				var membersInshiftS3 = {};
+			// 				membersInshiftS3.fe = 0;
+			// 				membersInshiftS3.sal = 0;
+			// 				membersInshiftS3.uc = 0;
+			// 				membersInshiftS3.upas = 0;
+			// 				var resData2 = response.data;
+			// 				if (resData2 && resData2.length > 0) {
+			// 					$scope.showReport = true;
+			// 					angular.forEach(resData2, function(member) {
+			// 						if (member.module1.toLowerCase() === "fe") {
+			// 							membersInshiftS3.fe = membersInshiftS3.fe + 1;
+			// 						} else if (member.module1.toLowerCase() === "sal") {
+			// 							membersInshiftS3.sal = membersInshiftS3.sal + 1;
+			// 						} else if (member.module1.toLowerCase() === "uc-up") {
+			// 							membersInshiftS3.uc = membersInshiftS3.uc + 1;
+			// 						} else if (member.module1.toLowerCase() === "upas") {
+			// 							membersInshiftS3.upas = membersInshiftS3.upas + 1;
+			// 						}
 
-								});
-							}
-							$scope.s3fe = membersInshiftS3.fe;
-							$scope.s3sal = membersInshiftS3.sal;
-							$scope.s3uc = membersInshiftS3.uc;
-							$scope.s3upas = membersInshiftS3.upas;
-							$scope.totalS3 = membersInshiftS3.fe + membersInshiftS3.sal + membersInshiftS3.uc + membersInshiftS3.upas;
-							totalFE = totalFE + membersInshiftS3.fe;
-							totalSal = totalSal + membersInshiftS3.sal;
-							totalUC = totalUC + membersInshiftS3.uc;
-							totalUPAS = totalUPAS + membersInshiftS3.upas;
-							updateTotalMembers(totalFE, totalSal, totalUC, totalUPAS);
-						}, function(errorResponse) {
-							console.log(errorResponse);
-						});
+			// 					});
+			// 				}
+			// 				$scope.s3fe = membersInshiftS3.fe;
+			// 				$scope.s3sal = membersInshiftS3.sal;
+			// 				$scope.s3uc = membersInshiftS3.uc;
+			// 				$scope.s3upas = membersInshiftS3.upas;
+			// 				$scope.totalS3 = membersInshiftS3.fe + membersInshiftS3.sal + membersInshiftS3.uc + membersInshiftS3.upas;
+			// 				totalFE = totalFE + membersInshiftS3.fe;
+			// 				totalSal = totalSal + membersInshiftS3.sal;
+			// 				totalUC = totalUC + membersInshiftS3.uc;
+			// 				totalUPAS = totalUPAS + membersInshiftS3.upas;
+			// 				updateTotalMembers(totalFE, totalSal, totalUC, totalUPAS);
+			// 			}, function(errorResponse) {
+			// 				console.log(errorResponse);
+			// 			});
 
-				}
+			// 	}
 
-			};
+			// };
 
 			var updateTotalMembers = function(totalFE, totalSal, totalUC, totalUPAS) {
 				$scope.feTotal = totalFE;
