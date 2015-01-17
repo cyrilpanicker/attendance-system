@@ -16,15 +16,66 @@ var getOwner = function (db,shiftDetails) {
 		if (!member) {
 			reject('Member details were not found for shift owner.');
 		} else {
-			resolve(member);
+			return Promise.resolve(member);
 		}
 	},function (error){
 		if (error) {
-			reject(error);
+			return Promise.reject(error);
 		} else {
-			reject('Database error occured while fetching member details for shift owner.');
+			return Promise.reject('Database error occured while fetching member details for shift owner.');
 		}
 	});
+};
+
+var getOwnerReport=function (db,startDate,endDate) {
+
+	var report=[];
+	
+	var startYear=startDate.getFullYear();
+	var startMonth=startDate.getMonth();
+	var startDay=startDate.getDate();
+
+	var endYear=endDate.getFullYear();
+	var endMonth=endDate.getMonth();
+	var endDay=endDate.getDate();
+
+	var startDate=new Date(startYear,startMonth,startDate);
+	var endDate=new Date(endYear,endMonth,endDate);
+
+	for(var date=startDate; date <= endDate; date=addDays(date,1)){
+		var object={};
+		object.date=date.toLocaleDateString();
+		var promise1=getOwner(db,{
+			year:date.getFullYear(),
+			month:date.getMonth(),
+			day:date.getDate()
+			shift:'S1'
+		})
+		.then(function (member){
+			object['S1']=member.name;
+		},function (error){
+			return Promise.reject(error);
+		});
+		var promise2=getOwner(db,{
+			year:date.getFullYear(),
+			month:date.getMonth(),
+			day:date.getDate()
+			shift:'S2'
+		});
+		var promise3=getOwner(db,{
+			year:date.getFullYear(),
+			month:date.getMonth(),
+			day:date.getDate()
+			shift:'S3'
+		});
+		Promise.all(promise1,promise2,promise3)
+		.then(function (response){
+			
+		},function (errorResponse){
+			
+		});
+	}
+
 };
 
 module.exports=exports={

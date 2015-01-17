@@ -83,38 +83,6 @@ db.open(function (error,db) {
 			});
 		});
 
-		// app.get('/getOwner',function (request,response) {
-		// 	db.collection('owners').findOne({
-		// 		"shift":request.query.shift,
-		// 		"year":parseInt(request.query.year),
-		// 		"month":parseInt(request.query.month),
-		// 		"day":parseInt(request.query.day)
-		// 	},function (error,owner) {
-		// 		if (error) {
-		// 			response.status(500).send('Database error occured while fetching owner details.');
-		// 			console.log(error);
-		// 		} else if (!owner) {
-		// 			response.send(null);
-		// 			console.log(null);
-		// 		} else {
-		// 			db.collection('members').findOne({
-		// 				"_id":owner.memberId
-		// 			},function (error,member) {
-		// 				if (error) {
-		// 					response.status(500).send('Database error occured while fetching member details.');
-		// 					console.log(error);
-		// 				} else if (!member) {
-		// 					response.status(500).send('Member details were not found for shift owner');
-		// 					console.log("Member details were not found for shift owner");
-		// 				} else {
-		// 					response.send(member.name);
-		// 					console.log("Success");
-		// 				}
-		// 			});
-		// 		}
-		// 	});
-		// });
-
 		app.get('/getOwner',function (request,response) {
 			service.getOwner(db,{
 				"shift":request.query.shift,
