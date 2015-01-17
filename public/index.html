@@ -491,6 +491,21 @@
 				shiftTiming: 'S3 - 07:00pm to 04:15am CST'
 			}];
 
+			$scope.ownerReport=[
+				{
+					'date':'01-Jan-2015',
+					'S1':'Cyril',
+					'S2':'Arun',
+					'S3':'Rejeesh'
+				},
+				{
+					'date':'02-Jan-2015',
+					'S1':'Manoj',
+					'S2':'Rahul',
+					'S3':'Naveen'
+				}
+			];
+
 		}]);
 </script>
 </head>
@@ -708,6 +723,33 @@
 					</tr>
 				</table>
 			</form>
+		</tab>
+		<tab heading="Shift Owner Report">
+			<accordion close-others="false">
+				<accordion-group is-open="true">
+					<accordion-heading>
+						Report
+					</accordion-heading>
+					<table class="table table-striped table-condensed" ng-controller="RosterController">
+						<thead>
+							<tr>
+								<th>Date</th>
+								<th>S1 shift owner</th>
+								<th>S2 shift owner</th>
+								<th>S3 shift owner</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="entry in ownerReport">
+								<td>{{entry.date}}</td>
+								<td>{{entry.S1}}</td>
+								<td>{{entry.S2}}</td>
+								<td>{{entry.S3}}</td>
+							</tr>
+						</tbody>
+					</table>
+				</accordion-group>
+			</accordian>
 		</tab>
 	</tabset>
 </body>

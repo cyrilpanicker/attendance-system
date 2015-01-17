@@ -354,3 +354,24 @@ var getShiftTimings=function (shift,year,month,day) {
 	}
 	return shiftTimings;
 };
+
+var getOwnerReport=function (startDate,endDate) {
+
+	var report=[];
+	
+	var startYear=startDate.getFullYear();
+	var startMonth=startDate.getMonth();
+	var startDay=startDate.getDate();
+
+	var endYear=endDate.getFullYear();
+	var endMonth=endDate.getMonth();
+	var endDay=endDate.getDate();
+
+	var startDate=new Date(startYear,startMonth,startDate);
+	var endDate=new Date(endYear,endMonth,endDate);
+
+	for(var date=startDate){
+
+	}
+
+};
