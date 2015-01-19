@@ -155,57 +155,6 @@ var getOwner = function (db,shiftDetails) {
 	});
 };
 
-// var getOwnerReport=function (db,startDate,endDate) {
-
-// 	var report=[];
-	
-// 	var startYear=startDate.getFullYear();
-// 	var startMonth=startDate.getMonth();
-// 	var startDay=startDate.getDate();
-
-// 	var endYear=endDate.getFullYear();
-// 	var endMonth=endDate.getMonth();
-// 	var endDay=endDate.getDate();
-
-// 	var startDate=new Date(startYear,startMonth,startDate);
-// 	var endDate=new Date(endYear,endMonth,endDate);
-
-// 	for(var date=startDate; date <= endDate; date=addDays(date,1)){
-// 		var object={};
-// 		object.date=date.toLocaleDateString();
-// 		var promise1=getOwner(db,{
-// 			year:date.getFullYear(),
-// 			month:date.getMonth(),
-// 			day:date.getDate()
-// 			shift:'S1'
-// 		})
-// 		.then(function (member){
-// 			object['S1']=member.name;
-// 		},function (error){
-// 			return Promise.reject(error);
-// 		});
-// 		var promise2=getOwner(db,{
-// 			year:date.getFullYear(),
-// 			month:date.getMonth(),
-// 			day:date.getDate()
-// 			shift:'S2'
-// 		});
-// 		var promise3=getOwner(db,{
-// 			year:date.getFullYear(),
-// 			month:date.getMonth(),
-// 			day:date.getDate()
-// 			shift:'S3'
-// 		});
-// 		Promise.all(promise1,promise2,promise3)
-// 		.then(function (response){
-			
-// 		},function (errorResponse){
-			
-// 		});
-// 	}
-
-// };
-
 var addDays=function(date, days) {
 	var result = new Date(date);
 	result.setDate(date.getDate() + days);
@@ -330,6 +279,73 @@ var getMembersInShift=function (db,shiftDetails) {
 	});
 };
 
+var getGroupedMembers=function (members) {
+	var groupedMembers={};
+	groupedMembers['FE']=[];
+	groupedMembers['SAL']=[];
+	groupedMembers['UCUP']=[];
+	groupedMembers['UPAS']=[];
+	for (var i = members.length - 1; i >= 0; i--) {
+		switch(members[i].module1){
+			case 'FE': groupedMembers['FE'].push(members[i]); break;
+			case 'SAL': groupedMembers['SAL'].push(members[i]); break;
+			case 'UC-UP': groupedMembers['UCUP'].push(members[i]); break;
+			case 'UPAS': groupedMembers['UPAS'].push(members[i]); break;
+		}
+	};
+	return groupedMembers;
+};
+
+var getReport=function (db,startDate,endDate) {
+	var shifts=['S1','S2','S3'];
+	var report=[];
+	var reportComplete=[];
+	for(var date=startDate; date<=endDate; date=addDays(date,1)){
+
+		var datum={
+			S1:{},
+			S2:{},
+			S3:{}
+		};
+		var datumUpdated=[];
+
+		datum.date=date.toLocaleDateString();
+
+		for (var i = shifts.length - 1; i >= 0; i--) {
+			var shiftUpdated=getMembersInShift(db,{
+				shift:shifts[i],
+				year:date.getDate(),
+				month:date.getMonth(),
+				day:date.getFullYear()
+			})
+			.then(function(members){
+				datum[shifts[i]]=getGroupedMembers(members);
+				return Promise.resolve();
+			},function(error){
+				return Promise.reject(error);
+			});
+			datumUpdated.push(shiftUpdated);
+		};
+
+		var reportUpdated=Promise.all(datumUpdated)
+		.then(function(){
+			report.push(datum);
+			return Promise.resolve();
+		},function(error){
+			return Promise.reject(error);
+		})
+
+		reportComplete.push(reportUpdated);
+	}
+
+	Promise.all(reportComplete)
+	.then(function(){
+		return Promise.resolve(report);
+	},function(error){
+		return Promise.reject(error);
+	});
+};
+
 module.exports=exports={
 	getMembers:getMembers,
 	authenticateMember:authenticateMember,
@@ -338,7 +354,8 @@ module.exports=exports={
 	enterAttendance:enterAttendance,
 	deleteEntry:deleteEntry,
 	getMembersInShift:getMembersInShift,
-	getShiftDetails:getShiftDetails
+	getShiftDetails:getShiftDetails,
+	getReport:getReport
 };
 
 // var getShiftTimings=function (shift,year,month,day) {
