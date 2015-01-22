@@ -20,7 +20,11 @@ var authenticateMember=function (db,memberId,passphrase) {
 		} else if (member.passphrase!==passphrase) {
 			return Promise.reject('passphrase-incorrect')
 		} else if (member.passphrase===passphrase) {
-			return Promise.resolve();
+			if (memberId=='admin') {
+				return Promise.resolve('admin-authenticated');
+			} else {
+				return Promise.resolve('member-authenticated');
+			}
 		} 
 	},function (){
 		return Promise.reject('db-error');
@@ -67,7 +71,7 @@ var enterAttendance=function (db,memberId,passphrase) {
 		}
 	})
 	.then(function (){
-		return Promise.resolve();
+		return Promise.resolve('attendance-marked');
 	},function (error){
 		if (!error) {
 			return Promise.reject('db-error');
@@ -78,15 +82,23 @@ var enterAttendance=function (db,memberId,passphrase) {
 };
 
 var deleteEntry=function (db,memberId,shiftDetails) {
-	return dbService.remove(db,'entries',{
+	var ownerEntryRemoved=dbService.remove(db,'owners',{
 		memberId:memberId,
 		shift:shiftDetails.shift,
 		year:shiftDetails.year,
 		month:shiftDetails.month,
 		day:shiftDetails.day
-	})
+	});
+	var entryRemoved=dbService.remove(db,'entries',{
+		memberId:memberId,
+		shift:shiftDetails.shift,
+		year:shiftDetails.year,
+		month:shiftDetails.month,
+		day:shiftDetails.day
+	});
+	return Promise.all([ownerEntryRemoved,entryRemoved])
 	.then(function (){
-		return Promise.resolve();
+		return Promise.resolve('entry-deleted');
 	},function (error){
 		return Promise.reject('db-error');
 	});
@@ -119,7 +131,7 @@ var updateOwner=function (db,memberId,passphrase,shiftDetails) {
 		}
 	})
 	.then(function (){
-		return Promise.resolve();
+		return Promise.resolve('owner-updated');
 	},function (error){
 		if (!error) {
 			return Promise.reject('db-error');
@@ -281,64 +293,70 @@ var getMembersInShift=function (db,shiftDetails) {
 
 var getGroupedMembers=function (members) {
 	var groupedMembers={};
-	groupedMembers['FE']=[];
-	groupedMembers['SAL']=[];
-	groupedMembers['UCUP']=[];
-	groupedMembers['UPAS']=[];
+	groupedMembers['FE']=0;
+	groupedMembers['SAL']=0;
+	groupedMembers['UCUP']=0;
+	groupedMembers['UPAS']=0;
 	for (var i = members.length - 1; i >= 0; i--) {
 		switch(members[i].module1){
-			case 'FE': groupedMembers['FE'].push(members[i]); break;
-			case 'SAL': groupedMembers['SAL'].push(members[i]); break;
-			case 'UC-UP': groupedMembers['UCUP'].push(members[i]); break;
-			case 'UPAS': groupedMembers['UPAS'].push(members[i]); break;
+			case 'FE': groupedMembers['FE']++; break;
+			case 'SAL': groupedMembers['SAL']++; break;
+			case 'UC-UP': groupedMembers['UCUP']++; break;
+			case 'UPAS': groupedMembers['UPAS']++; break;
 		}
 	};
 	return groupedMembers;
 };
 
 var getReport=function (db,startDate,endDate) {
+
 	var shifts=['S1','S2','S3'];
 	var report=[];
 	var reportComplete=[];
+
 	for(var date=startDate; date<=endDate; date=addDays(date,1)){
 
-		var datum={
-			S1:{},
-			S2:{},
-			S3:{}
-		};
-		var datumUpdated=[];
+		(function (date) {
+			var datum={
+				S1:{},
+				S2:{},
+				S3:{}
+			};
+			var datumUpdated=[];
 
-		datum.date=date.toLocaleDateString();
+			datum.date=date.getFullYear()+'/'+(parseInt(date.getMonth())+1)+'/'+date.getDate();
 
-		for (var i = shifts.length - 1; i >= 0; i--) {
-			var shiftUpdated=getMembersInShift(db,{
-				shift:shifts[i],
-				year:date.getDate(),
-				month:date.getMonth(),
-				day:date.getFullYear()
-			})
-			.then(function(members){
-				datum[shifts[i]]=getGroupedMembers(members);
+			for (var i = shifts.length - 1; i >= 0; i--) {
+				(function (i) {
+					var shiftUpdated=getMembersInShift(db,{
+						shift:shifts[i],
+						year:date.getFullYear(),
+						month:date.getMonth(),
+						day:date.getDate()
+					})
+					.then(function(members){
+						datum[shifts[i]]=getGroupedMembers(members);
+						return Promise.resolve();
+					},function(error){
+						return Promise.reject(error);
+					});
+					datumUpdated.push(shiftUpdated);
+				})(i);
+			};
+
+			var reportUpdated=Promise.all(datumUpdated)
+			.then(function(){
+				report.push(datum);
 				return Promise.resolve();
 			},function(error){
 				return Promise.reject(error);
-			});
-			datumUpdated.push(shiftUpdated);
-		};
+			})
 
-		var reportUpdated=Promise.all(datumUpdated)
-		.then(function(){
-			report.push(datum);
-			return Promise.resolve();
-		},function(error){
-			return Promise.reject(error);
-		})
-
-		reportComplete.push(reportUpdated);
+			reportComplete.push(reportUpdated);
+		})(date);
 	}
 
-	Promise.all(reportComplete)
+	return Promise.all(reportComplete)
 	.then(function(){
 		return Promise.resolve(report);
 	},function(error){

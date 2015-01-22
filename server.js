@@ -33,8 +33,8 @@ db.open(function (error,db) {
 				month:request.body.month,
 				day:request.body.day
 			})
-			.then(function (){
-				response.send('shift-owner-updated')
+			.then(function (message){
+				response.send(message)
 			},function (error){
 				if (error=='passphrase-incorrect') {
 					response.status(409).send(error);
@@ -60,8 +60,8 @@ db.open(function (error,db) {
 
 		app.post('/authorizeRosterEdit',function (request,response) {
 			service.authenticateMember(db,'admin',request.body.passphrase)
-			.then(function (){
-				response.send();
+			.then(function (message){
+				response.send(message);
 			},function (error){
 				if (error=='passphrase-incorrect') {
 					response.status(409).send(error);
@@ -73,8 +73,8 @@ db.open(function (error,db) {
 
 		app.post('/enter',function (request,response) {
 			service.enterAttendance(db,request.body.memberId,request.body.passphrase)
-			.then(function (){
-				response.send();
+			.then(function (message){
+				response.send(message);
 			},function (error){
 				if (error=='passphrase-incorrect' || error=='attendance-already-marked') {
 					response.status(409).send(error);
@@ -91,8 +91,8 @@ db.open(function (error,db) {
 				month:request.body.month,
 				day:request.body.day
 			})
-			.then(function (){
-				response.send();
+			.then(function (message){
+				response.send(message);
 			},function (error){
 				response.status(500).send(error);
 			});
@@ -111,6 +111,17 @@ db.open(function (error,db) {
 			})
 			.then(function (members){
 				response.send(members);
+			},function (error){
+				response.status(500).send(error);
+			});
+		});
+
+		app.get('/report',function (request,response) {
+			var startDate=new Date(parseInt(request.query.startYear),parseInt(request.query.startMonth),parseInt(request.query.startDay));
+			var endDate=new Date(parseInt(request.query.endYear),parseInt(request.query.endMonth),parseInt(request.query.endDay));
+			service.getReport(db,startDate,endDate)
+			.then(function (report){
+				response.send(report);
 			},function (error){
 				response.status(500).send(error);
 			});
