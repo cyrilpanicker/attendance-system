@@ -63,7 +63,7 @@ db.open(function (error,db) {
 			.then(function (message){
 				response.send(message);
 			},function (error){
-				if (error=='passphrase-incorrect') {
+				if (error=='passphrase-incorrect' || error=='admin-passphrase-incorrect') {
 					response.status(409).send(error);
 				} else {
 					response.status(500).send(error);
