@@ -18,7 +18,11 @@ var authenticateMember=function (db,memberId,passphrase) {
 		if (!member) {
 			return Promise.reject('passphrase-not-setup');
 		} else if (member.passphrase!==passphrase) {
-			return Promise.reject('passphrase-incorrect')
+			if (memberId=='admin') {
+				return Promise.reject('admin-passphrase-incorrect');
+			} else {
+				return Promise.reject('passphrase-incorrect');
+			}
 		} else if (member.passphrase===passphrase) {
 			if (memberId=='admin') {
 				return Promise.resolve('admin-authenticated');
@@ -53,7 +57,7 @@ var enterAttendance=function (db,memberId,passphrase) {
 	})
 	.then(function (entry){
 		if (entry) {
-			return Promise.reject('attendance-already-marked');
+			return Promise.reject('attendance-already-marked-'+shift);
 		} else {
 			return dbService.insert(db,'entries',{
 				memberId:memberId,
@@ -71,7 +75,7 @@ var enterAttendance=function (db,memberId,passphrase) {
 		}
 	})
 	.then(function (){
-		return Promise.resolve('attendance-marked');
+		return Promise.resolve('attendance-marked-'+shift);
 	},function (error){
 		if (!error) {
 			return Promise.reject('db-error');
@@ -131,7 +135,7 @@ var updateOwner=function (db,memberId,passphrase,shiftDetails) {
 		}
 	})
 	.then(function (){
-		return Promise.resolve('owner-updated');
+		return Promise.resolve('owner-updated-'+shiftDetails.shift);
 	},function (error){
 		if (!error) {
 			return Promise.reject('db-error');

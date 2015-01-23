@@ -14,6 +14,35 @@
 		.config(['cfpLoadingBarProvider', function(cfpLoadingBarProvider) {
 			cfpLoadingBarProvider.includeSpinner = false;
 		}])
+		.config(['$httpProvider', function ($httpProvider) {
+			$httpProvider.interceptors.push('Interceptor');
+		}])
+		.factory('Interceptor', [ '$q', function ($q) {
+		    return {
+		    	response:function (response) {
+		    		if (typeof response.data == 'string' && response.data.indexOf('attendance-marked')>-1) {
+		    			response.data='Attendance has been marked for '+response.data.substring(18,20)+' shift.';
+		    		} else if (typeof response.data == 'string' && response.data.indexOf('owner-updated')>-1) {
+		    			response.data='Shift owner has been updated for '+response.data.substring(14,16)+' shift.';
+		    		}
+		    		return response;
+		    	},
+		    	responseError:function (response) {
+		    		if (response.data == 'passphrase-incorrect') {
+		    			response.data='Passphrase incorrect. Please try again with correct passphrase.';
+		    		} else if (response.data == 'admin-passphrase-incorrect') {
+		    			response.data='You are not authorized to edit the roster.';
+		    		} else if (response.data == 'db-error') {
+		    			response.data='Database error occurred at server.';
+		    		} else if (typeof response.data == 'string' && response.data.indexOf('attendance-already-marked')>-1) {
+		    			response.data='Attendance has already been marked for '+response.data.substring(26,28)+' shift.';
+		    		} else if (response.data == 'member-details-not-found') {
+		    			response.data='Member details were not found in database.';
+		    		} 
+		    		return $q.reject(response);
+		    	}
+		    };
+		}])
 		.factory('Service', ['$http', function($http) {
 			var service = {};
 			service.getMembers = function() {
