@@ -418,6 +418,22 @@
 			border-top-right-radius: 4px; 
 			border-bottom-right-radius: 4px; 
 		}
+		.table.report tr[ng-repeat-start] td{
+			border-top: 1px solid rgb(49, 112, 143);
+		}
+		.table.report tr[ng-repeat-end] td{
+			border-top: 1px solid rgb(49, 112, 143);
+		}
+		.table.report tr:last-child td{
+			border-top: 1px solid rgb(49, 112, 143);
+			border-bottom: 1px solid rgb(49, 112, 143);
+		}
+		.table.report tr[ng-repeat-start] td{
+			border-bottom: 1px solid rgb(49, 112, 143);
+		}
+		.table.report td{
+			vertical-align:middle;
+		}
 	</style>
 </head>
 
@@ -604,7 +620,7 @@
 						<accordion-heading>
 							<span class="blueText">Report for the selected date range</span>
 						</accordion-heading>
-						<table ng-init="report.S1GrandTotal = 0; report.S2GrandTotal = 0; report.S3GrandTotal = 0;" class="table table-condensed table-striped">
+						<table ng-init="report.S1GrandTotal = 0; report.S2GrandTotal = 0; report.S3GrandTotal = 0;" class="table table-condensed table-striped report">
 							<tr ng-repeat-start="datum in report | orderBy : 'date'">
 								<td rowspan="6"><strong>{{datum.date}}</strong></td>
 								<td></td>
