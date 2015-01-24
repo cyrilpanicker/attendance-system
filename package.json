@@ -1,12 +1,14 @@
 {
   "name": "memberDash",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "application to track members in a give shift",
   "author": "cyril panicker",
   "license": "ISC",
   "dependencies": {
-    "mongodb": "~1.4.22",
+    "bluebird": "^2.7.1",
+    "body-parser": "~1.10.0",
     "express": "~4.10.4",
-    "body-parser": "~1.10.0"
+    "express-json": "~1.0.0",
+    "mongodb": "~1.4.22"
   }
 }

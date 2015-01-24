@@ -2,382 +2,685 @@
 <!DOCTYPE html>
 <html lang="en" ng-app="app">
 <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="/css/bootstrap-theme.min.css">
-    <link rel="stylesheet" type="text/css" href="/css/loading-bar.min.css">
-    <script src="/scripts/angular.min.js"></script>
-    <script src="/scripts/loading-bar.min.js"></script>
-    <script src="/scripts/ui-bootstrap-tpls.min.js"></script>
-    <style>
-    .page-header{
-        background-color: rgb(206, 232, 196);
-        margin: 0px;
-        padding-bottom: 30px;
-        padding-top: 30px;
-        padding-left: 10px;
-        color:rgb(60, 118, 65);
-        text-align: center;
-    }
-    .shiftDropdown{
-        width: 225px;
-    }
-    .alertClass{
-        margin-left: 22%;
-    }
-    #recordAttendanceButton{
-        border-top-right-radius: 4px; 
-        border-bottom-right-radius: 4px; 
-    }
-    </style>
-    <script>
-    angular.module('app', ['ui.bootstrap','angular-loading-bar'])
-    .config(['cfpLoadingBarProvider',function (cfpLoadingBarProvider) {
-        cfpLoadingBarProvider.includeSpinner=false;
-    }])
-    .factory('Service', ['$http', function ($http) {
+	<meta charset="UTF-8">
+	<link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/bootstrap-theme.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/loading-bar.min.css">
+	<script src="/scripts/angular.min.js"></script>
+	<script src="/scripts/loading-bar.min.js"></script>
+	<script src="/scripts/ui-bootstrap-tpls.min.js"></script>
+	<script>
+		angular.module('app', ['ui.bootstrap', 'angular-loading-bar'])
+		.config(['cfpLoadingBarProvider', function(cfpLoadingBarProvider) {
+			cfpLoadingBarProvider.includeSpinner = false;
+		}])
+		.config(['$httpProvider', function ($httpProvider) {
+			$httpProvider.interceptors.push('Interceptor');
+		}])
+		.factory('Interceptor', [ '$q', function ($q) {
+		    return {
+		    	response:function (response) {
+		    		if (typeof response.data == 'string' && response.data.indexOf('attendance-marked')>-1) {
+		    			response.data='Attendance recorded successfully for '+response.data.substring(18,20)+' shift.';
+		    		} else if (typeof response.data == 'string' && response.data.indexOf('owner-updated')>-1) {
+		    			response.data='Shift owner has been updated for '+response.data.substring(14,16)+' shift.';
+		    		}
+		    		return response;
+		    	},
+		    	responseError:function (response) {
+		    		if (response.data == 'passphrase-incorrect') {
+		    			response.data='Passphrase incorrect. Please try again with correct passphrase.';
+		    		} else if (response.data == 'admin-passphrase-incorrect') {
+		    			response.data='You are not authorized to edit the roster.';
+		    		} else if (response.data == 'db-error') {
+		    			response.data='Database error occurred at server.';
+		    		} else if (typeof response.data == 'string' && response.data.indexOf('attendance-already-marked')>-1) {
+		    			response.data='Attendance is already recorded for '+response.data.substring(26,28)+' shift.';
+		    		} else if (response.data == 'member-details-not-found') {
+		    			response.data='Member details were not found in database.';
+		    		} 
+		    		return $q.reject(response);
+		    	}
+		    };
+		}])
+		.factory('Service', ['$http', function($http) {
+			var service = {};
+			service.getMembers = function() {
+				return $http({
+					method: 'GET',
+					url: '/members',
+				});
+			};
+			service.getReport = function (startDate,endDate) {
+				return $http({
+					method: 'GET',
+					url: '/report',
+					params: {
+						startYear:startDate.getFullYear(),
+						startMonth:startDate.getMonth(),
+						startDay:startDate.getDate(),
+						endYear:endDate.getFullYear(),
+						endMonth:endDate.getMonth(),
+						endDay:endDate.getDate()
+					}
+				});
+			};
+			service.enterAttendance = function(data) {
+				return $http({
+					method: 'POST',
+					url: '/enter',
+					data: data
+				});
+			};
+			service.getShiftDetails = function() {
+				return $http({
+					method: 'GET',
+					url: '/shiftDetails'
+				});
+			};
+			service.authorizeRosterEdit = function(passphrase) {
+				return $http({
+					method: 'POST',
+					url: '/authorizeRosterEdit',
+					data: {
+						passphrase: passphrase
+					}
+				})
+			};
+			service.getMembersInShift = function(shiftDetails) {
+				return $http({
+					method: 'GET',
+					url: '/membersInShift',
+					params: {
+						shift: shiftDetails.shift,
+						year: shiftDetails.year,
+						month: shiftDetails.month,
+						day: shiftDetails.day
+					}
+				});
+			};
+			service.deleteEntry = function(shiftDetails, memberId) {
+				return $http({
+					method: 'POST',
+					url: '/deleteEntry',
+					data: {
+						shift: shiftDetails.shift,
+						year: shiftDetails.year,
+						month: shiftDetails.month,
+						day: shiftDetails.day,
+						memberId: memberId
+					}
+				});
+			};
+			service.addShiftOwner = function(shift, year, month, day, shiftOwner, passphraseShiftOwner) {
+				return $http({
+					method: "POST",
+					url: '/updateOwner',
+					data: {
+						shift: shift,
+						year: year,
+						month: month,
+						day: day,
+						memberId: shiftOwner,
+						passphrase: passphraseShiftOwner
+					}
+				});
+			};
+			service.getOwner = function(shiftDetails) {
+				return $http({
+					method: "GET",
+					url: "/getOwner",
+					params: {
+						shift: shiftDetails.shift,
+						year: shiftDetails.year,
+						month: shiftDetails.month,
+						day: shiftDetails.day
+					}
+				})
+			};
+			return service;
 
-        var service={};
-        service.getMembers=function () {
-            return $http({
-                method:'GET',
-                url:'/members',
-            });
-        };
-        service.enterAttendance=function (data) {
-            return $http({
-                method:'POST',
-                url:'/enter',
-                data:data
-            });
-        };
-        service.getShiftDetails=function () {
-            return $http({
-                method:'GET',
-                url:'/shiftDetails'
-            });
-        };
+		}])
+		.controller('AttendanceController', ['$scope','$timeout','Service', function ($scope,$timeout,Service) {
+			var logResponseToConsole = function(response) {
+				console.log(response.data);
+			};
+			var updateMembersInShift = function(shiftDetails) {
+				$scope.membersInCurrentShift = [];
+				$scope.membersInPreviousShift = [];
+				Service.getShiftDetails()
+					.then(function(response) {
+						if (!shiftDetails || angular.equals(shiftDetails, response.data.currentShift)) {
+							var currentShiftDetails = response.data.currentShift;
+							var previousShiftDetails = response.data.previousShift;
+							if (!shiftDetails) {
+								$scope.inputs.date = new Date(currentShiftDetails.year, currentShiftDetails.month, currentShiftDetails.day);
+								$scope.inputs.shift = currentShiftDetails.shift;
+							}
+							Service.getMembersInShift(currentShiftDetails)
+								.then(function(response) {
+									$scope.membersInCurrentShift = response.data;
+								}, logResponseToConsole);
+							Service.getOwner(currentShiftDetails)
+								.then(function(response) {
+									$scope.currentShiftOwner = response.data.name;
+								}, function(errorResponse) {
+									$scope.currentShiftOwner = '';
+								});
+							if (!response.data.previousShiftEnded) {
+								Service.getMembersInShift(previousShiftDetails)
+									.then(function(response) {
+										$scope.membersInPreviousShift = response.data;
+									}, logResponseToConsole);
+								Service.getOwner(previousShiftDetails)
+									.then(function(response) {
+										$scope.previousShiftOwner = response.data.name;
+									}, function(errorResponse) {
+										$scope.previousShiftOwner = '';
+									});
+							}
+						} else {
+							$scope.membersInPreviousShift = [];
+							$scope.currentShiftOwner = '';
+							$scope.previousShiftOwner = '';
+							Service.getMembersInShift(shiftDetails)
+								.then(function(response) {
+									$scope.membersInCurrentShift = response.data;
+								}, logResponseToConsole);
+							Service.getOwner(shiftDetails)
+								.then(function(response) {
+									$scope.currentShiftOwner = response.data.name;
+								}, function(errorResponse) {
+									$scope.currentShiftOwner = '';
+								});
+						}
+					}, logResponseToConsole);
+			};
+			var addDays=function(date, days) {
+				var result = new Date(date);
+				result.setDate(date.getDate() + days);
+				return result;
+			};
+			var updateReport=function (startDate,endDate) {
+				if (!startDate || !endDate) {
+					Service.getShiftDetails()
+					.then(function (response){
+						$scope.inputs.report.endDate = new Date(response.data.currentShift.year,response.data.currentShift.month,response.data.currentShift.day);
+						$scope.inputs.report.startDate = addDays($scope.inputs.report.endDate,-7);
+						updateReport($scope.inputs.report.startDate, $scope.inputs.report.endDate);
+					},logResponseToConsole);
+				} else {
+					Service.getReport(startDate,endDate)
+					.then(function (response){
+						$scope.report=response.data;
+					},function (errorResponse){
+						$scope.reportError=errorResponse.data;
+					});
+				}
+			};
+			$scope.inputs={
+				report:{}
+			};
+			$scope.report=[];
 
-        service.authorizeRosterEdit=function (passphrase) {
-            return $http({
-                method:'POST',
-                url:'/authorizeRosterEdit',
-                data:{
-                    passphrase:passphrase
-                }
-            })
-        };
+			$scope.shifts = [{
+				shiftNo: 'S1',
+				shiftTiming: 'S1 - 03:00am to 12:15pm CST'
+			}, {
+				shiftNo: 'S2',
+				shiftTiming: 'S2 - 10:15am to 07:30pm CST'
+			}, {
+				shiftNo: 'S3',
+				shiftTiming: 'S3 - 07:00pm to 04:15am CST'
+			}];
+			$scope.disableRosterEditMode=function () {
+				$scope.rosterEditModeOn = false;
+				$scope.rosterEditButtonText='Edit Roster';
+			};
+			$scope.enableRosterEditMode=function () {
+				$scope.rosterEditModeOn = true;
+				$scope.rosterEditButtonText='Done';
+			};
+			$scope.resetAlerts=function () {
+				$scope.attendanceError = '';
+				$scope.attendanceSuccess = '';
+				$scope.shiftOwnerSuccess = '';
+				$scope.shiftOwnerError = '';
+				$scope.rosterEditError = '';
+			};
+			$scope.resetPassphrases=function () {
+				$scope.inputs.passphrase='';
+				$scope.inputs.ownerPassphrase='';
+				$scope.inputs.adminPassphrase='';
+			}
+			$scope.resetMember=function () {
+				$scope.inputs.memberId='';
+				$scope.inputs.ownerId='';
+			}
+			$scope.enterAttendance = function(inputs) {
+				$scope.resetAlerts();
+				if (inputs && inputs.memberId && inputs.passphrase) {
+					Service.enterAttendance({memberId:inputs.memberId,passphrase:inputs.passphrase})
+						.then(function(response) {
+							$scope.attendanceSuccess = response.data;
+							$scope.resetPassphrases();
+							updateMembersInShift();
+							updateReport();
+						}, function(errorResponse) {
+							$scope.attendanceError = errorResponse.data;
+							$scope.resetPassphrases();
+						});
+				} else {
+					$scope.attendanceError = 'Select a name and enter passphrase.';
+				} 
+			};
+			$scope.deleteEntry = function(memberId) {
+				$scope.resetAlerts();
+				Service.deleteEntry({
+						shift: $scope.inputs.shift,
+						year: $scope.inputs.date.getFullYear(),
+						month: $scope.inputs.date.getMonth(),
+						day: $scope.inputs.date.getDate()
+					}, memberId)
+					.then(function(response) {
+						updateMembersInShift();
+						updateReport();
+					}, function(errorResponse) {
+						$scope.rosterEditError = errorResponse.data;
+					});
+			};
+			$scope.markShiftOwner = function(inputs) {
+				$scope.resetAlerts();
+				var year = inputs.date.getFullYear();
+				var month = inputs.date.getMonth();
+				var day = inputs.date.getDate();
+				if (inputs && inputs.ownerId && inputs.ownerPassphrase) {
+					Service.addShiftOwner(inputs.shift, year, month, day, inputs.ownerId, inputs.ownerPassphrase)
+						.then(function(response) {
+							$scope.shiftOwnerSuccess = response.data;
+							$scope.resetPassphrases();
+							updateMembersInShift();
+						}, function(errorResponse) {
+							$scope.shiftOwnerError = errorResponse.data;
+							$scope.resetPassphrases();
+						});
+				} else {
+					$scope.shiftOwnerError = "Select a name and enter passphrase."
+				}
 
-        service.getMembersInShift=function (shiftDetails) {
-            return $http({
-                method:'GET',
-                url:'/membersInShift',
-                params:{
-                    shift:shiftDetails.shift,
-                    year:shiftDetails.year,
-                    month:shiftDetails.month,
-                    day:shiftDetails.day
-                }
-            });
-        };
-        service.deleteEntry=function (shiftDetails,memberId) {
-            return $http({
-                method:'POST',
-                url:'/deleteEntry',
-                data:{
-                    shift:shiftDetails.shift,
-                    year:shiftDetails.year,
-                    month:shiftDetails.month,
-                    day:shiftDetails.day,
-                    memberId:memberId
-                }
-            });
-        };
-        return service;
-
-    }])
-    .controller('attendanceRecorderController', ['$scope','$rootScope','Service', function ($scope,$rootScope,Service) {
-
-        $scope.error='';
-        $scope.successMessage='';
-
-        Service.getMembers()
-        .then(function(response){
-            $scope.error='';
-            $scope.members=response.data;
-        },function(errorResponse){
-            $scope.successMessage='';
-            $scope.error=errorResponse.data;
-        });
-
-        $scope.submit=function () {
-            $scope.error='';
-            $scope.successMessage='';
-            if ($scope.data && $scope.data.memberId && $scope.data.passphrase) {
-                Service.enterAttendance($scope.data)
-                .then(function(response){
-                    $scope.error='';
-                    console.log(response);
-                    $scope.successMessage=response.data;
-                    $rootScope.$broadcast('attendance-entered');
-                },function(errorResponse){
-                    $scope.successMessage='';
-                    $scope.error=errorResponse.data;
-                    console.log(errorResponse);
-                });
-            } 
-        };
-
-    }])
-    .controller('RosterController', ['$scope','$rootScope','Service', function ($scope,$rootScope,Service) {
-         
-         $scope.editresetbutton="Edit Roster";
-        var logResponseToConsole=function (response) {
-            console.log(response.data);
-        };
-
-        var updateMembersInShift=function (shiftDetails) {
-            $scope.errorMessage='';
-            $scope.membersInCurrentShift=[];
-            $scope.membersInPreviousShift=[];
-            Service.getShiftDetails()
-            .then(function (response){
-                if (!shiftDetails || angular.equals(shiftDetails, response.data.currentShift)) {
-                    var currentShiftDetails=response.data.currentShift;
-                    var previousShiftDetails=response.data.previousShift;
-                    if (!shiftDetails) {
-                        $scope.date=new Date(currentShiftDetails.year,currentShiftDetails.month,currentShiftDetails.day);
-                        $scope.shift=currentShiftDetails.shift;
-                    } 
-                    Service.getMembersInShift(currentShiftDetails)
-                    .then(function (response){
-                        $scope.membersInCurrentShift=response.data;
-                    },logResponseToConsole);
-                    if(!response.data.previousShiftEnded){
-                        Service.getMembersInShift(previousShiftDetails)
-                        .then(function (response){
-                            $scope.membersInPreviousShift=response.data;
-                        },logResponseToConsole);
-                    }
-                } else {
-                    $scope.membersInPreviousShift=[];
-                    Service.getMembersInShift(shiftDetails)
-                    .then(function (response){
-                        $scope.membersInCurrentShift=response.data;
-                    },logResponseToConsole);
-                }
-            },logResponseToConsole);
-        };
-
-        updateMembersInShift();
-
-        $scope.$watch('date', function(newDate) {
-            if (newDate) {
-                var shiftDetails={
-                    shift:$scope.shift,
-                    year:newDate.getFullYear(),
-                    month:newDate.getMonth(),
-                    day:newDate.getDate()
-                };
-                updateMembersInShift(shiftDetails);
-            }
-        });
-
-        $scope.$watch('shift', function(newShift) {
-            if (newShift) {
-                var shiftDetails={
-                    shift:newShift,
-                    year:$scope.date.getFullYear(),
-                    month:$scope.date.getMonth(),
-                    day:$scope.date.getDate()
-                };
-                updateMembersInShift(shiftDetails);
-            }
-        });
-
-        $rootScope.$on('attendance-entered', function(){
-            updateMembersInShift();
-        });
-
-        $scope.editFuction = function(){
-        if($scope.isDeleteShow){
-            $scope.isDeleteShow = !$scope.isDeleteShow;
-           }
-        else{
-            $scope.isDeleteShow= true;
-          }
-        };
-
-        $scope.deleteEntry=function (memberId) {
-            Service.deleteEntry({
-                shift:$scope.shift,
-                year:$scope.date.getFullYear(),
-                month:$scope.date.getMonth(),
-                day:$scope.date.getDate()
-            },memberId)
-            .then(function (response){
-                updateMembersInShift();
-            },function (errorResponse){
-                $scope.errorMessage=errorResponse.data;
-            });
-        };
-
-        $scope.authorizeRosterEdit=function (passphrase) {
-            if($scope.editresetbutton && $scope.editresetbutton != "Reset"){
-            Service.authorizeRosterEdit(passphrase)
-            .then(function (response) {
-                $scope.isDeleteShow = true;
-                $scope.errorMessage="";
-                $scope.adminPassword="";
-                $scope.editresetbutton="Reset";
-            },function(errorResponse){
-                $scope.errorMessage=errorResponse.data;
-            });  
-          }  
-          else{
-            $scope.isDeleteShow = false;
-            $scope.editresetbutton="Edit Roster"
-          }   
-        };
-
-        $scope.openDatePicker = function($event) {
-            $event.preventDefault();
-            $event.stopPropagation();
-            $scope.opened = true;
-        };
-
-        $scope.shifts=[{
-            shiftNo:'S1',
-            shiftTiming:'S1 - 03:00am to 12:15pm'
-        },{
-            shiftNo:'S2',
-            shiftTiming:'S2 - 10:15am to 07:30pm'
-        },{
-            shiftNo:'S3',
-            shiftTiming:'S3 - 07:00pm to 04:15am'
-        }];
-
-    }]);
-    </script>
+			};
+			$scope.authorizeRosterEdit = function(inputs) {
+				$scope.resetAlerts();
+				if ($scope.rosterEditModeOn) {
+					$scope.disableRosterEditMode();
+				} else if (inputs && inputs.adminPassphrase) {
+					Service.authorizeRosterEdit(inputs.adminPassphrase)
+					.then(function (response){
+						$scope.resetPassphrases();
+						$scope.enableRosterEditMode();
+					},function (errorResponse){
+						$scope.rosterEditError=errorResponse.data;
+						$scope.resetPassphrases();
+					});
+				} else{
+					$scope.rosterEditError='Enter admin passphrase to edit roster.';
+				}
+			};
+			$scope.$watch('inputs.date', function(newDate,oldDate) {
+				if (newDate && oldDate && !angular.equals(newDate, oldDate)) {
+					var shiftDetails = {
+						shift: $scope.inputs.shift,
+						year: newDate.getFullYear(),
+						month: newDate.getMonth(),
+						day: newDate.getDate()
+					};
+					updateMembersInShift(shiftDetails);
+					$scope.inputs.report.endDate=newDate;
+					$scope.inputs.report.startDate=addDays($scope.inputs.report.endDate,-7);
+				}
+			});
+			$scope.$watch('inputs.shift', function(newShift,oldShift) {
+				if (newShift && oldShift && !angular.equals(newShift, oldShift)) {
+					var shiftDetails = {
+						shift: newShift,
+						year: $scope.inputs.date.getFullYear(),
+						month: $scope.inputs.date.getMonth(),
+						day: $scope.inputs.date.getDate()
+					};
+					updateMembersInShift(shiftDetails);
+				}
+			});
+			$scope.$watch('inputs.report.startDate', function(newDate, oldDate) {
+				if (newDate && oldDate && !angular.equals(newDate, oldDate)) {
+					updateReport(newDate,$scope.inputs.report.endDate);
+				} 
+			});
+			$scope.$watch('inputs.report.endDate', function(newDate, oldDate) {
+				if (newDate && oldDate && !angular.equals(newDate, oldDate)) {
+					updateReport($scope.inputs.report.startDate,newDate);
+				} 
+			});
+			$scope.disableRosterEditMode();
+			Service.getMembers()
+				.then(function(response) {
+					$scope.members = response.data;
+				}, function(errorResponse) {
+					$scope.attendanceError = errorResponse.data;
+				});
+			updateMembersInShift();
+			updateReport();
+		}])
+		.controller('DateController', ['$scope', function ($scope) {
+			$scope.openDatePicker = function($event) {
+				$event.preventDefault();
+				$event.stopPropagation();
+				$scope.opened=true;
+			};
+		}])
+		.controller('ReportController', ['$scope', function ($scope) {
+			$scope.startDate={};
+			$scope.endDate={};
+			$scope.startDate.openDatePicker = function($event) {
+				$event.preventDefault();
+				$event.stopPropagation();
+				$scope.startDate.opened=true;
+			};
+			$scope.endDate.openDatePicker = function($event) {
+				$event.preventDefault();
+				$event.stopPropagation();
+				$scope.endDate.opened=true;
+			};
+			$scope.orderByDate=function (datum) {
+				var date=new Date(datum.date);
+				return new Date(date.getFullYear(),date.getMonth(),date.getDate());
+			};
+		}]);
+	</script>
+	<style>
+		.page-header{
+			background-color: rgb(204, 231, 244);
+			margin: 0px;
+			padding-bottom: 30px;
+			padding-top: 30px;
+			padding-left: 10px;
+			color: rgb(49, 112, 143);
+			text-align: center;
+		}
+		.shiftDropdown{
+			width: 250px;
+		}
+		.alertClass{
+			margin-left: 22%;
+		}
+		.blueText{
+			color: rgb(49, 112, 143);
+		}
+		.shiftSelect{
+			font-weight: bold;
+		}
+		#recordAttendanceButton,#recordShiftOwnerButton{
+			border-top-right-radius: 4px; 
+			border-bottom-right-radius: 4px; 
+		}
+		.table.report tr[ng-repeat-start] td{
+			border-top: 1px solid rgb(49, 112, 143);
+		}
+		.table.report tr[ng-repeat-end] td{
+			border-top: 1px solid rgb(49, 112, 143);
+		}
+		.table.report tr:last-child td{
+			border-top: 1px solid rgb(49, 112, 143);
+			border-bottom: 1px solid rgb(49, 112, 143);
+		}
+		.table.report tr[ng-repeat-start] td{
+			border-bottom: 1px solid rgb(49, 112, 143);
+		}
+		.table.report td{
+			vertical-align:middle;
+		}
+	</style>
 </head>
-<body>
-    <h2 class="page-header"><strong>USP Support Shift Details</strong></h2>
-    <tabset class="panel panel-heading container">
-        <tab heading="Roster">
-            <form class="panel-body" name="frmShiftPlan" ng-controller="RosterController" ng-submit="" novalidate>
-                <div class="row">
-                    <div class="col-md-3">
+
+<body ng-controller="AttendanceController">
+	<h2 class="page-header"><strong>USP Support Shift Details</strong></h2>
+	<tabset class="panel panel-heading container">
+		<tab heading="Roster">
+			<form class="panel-body" name="frmShiftPlan" ng-submit="authorizeRosterEdit(inputs)" novalidate>
+				<div class="row">
+					<div class="col-md-3">
+						<p class="input-group" ng-controller="DateController">
+							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputs.date" is-open="opened" ng-required="true" close-text="Close" />
+							<span class="input-group-btn">
+								<button type="button" class="btn btn-default" ng-click="openDatePicker($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+							</span>
+						</p>
+					</div>
+					<div class="col-md-1">
+						<select ng-model="inputs.shift" ng-options="shift.shiftNo as shift.shiftTiming for shift in shifts" class="form-control shiftDropdown">
+							<option value="">Shift</option>
+						</select>
+					</div>
+					<div class="col-md-4 pull-right" ng-show="membersInCurrentShift.length">
                         <p class="input-group">
-                            <input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="date" is-open="opened" ng-required="true" close-text="Close" />
+                            <input name="adminPass" type="password" class="form-control" placeholder="Enter Admin Passphrase" ng-model="inputs.adminPassphrase" ng-required="true" ng-disabled="rosterEditModeOn" ng-change="resetAlerts();" />
                             <span class="input-group-btn">
-                                <button type="button" class="btn btn-default" ng-click="openDatePicker($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+                                <button type="submit" class="btn btn-info" ng-disabled="!rosterEditModeOn && frmShiftPlan.adminPass.$error.required">{{rosterEditButtonText}}</button>
                             </span>
                         </p>
-                    </div>
-                    <div class="col-md-1">
-                        <select ng-model="shift" ng-options="shift.shiftNo as shift.shiftTiming for shift in shifts" class="form-control shiftDropdown">
-                            <option value="">Shift</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 pull-right" ng-show="membersInCurrentShift.length">
-                        <p class="input-group">
-                            <input name="adminPass" type="password" class="form-control" placeholder="Enter admin passphrase" ng-model="adminPassword" ng-required="true" close-text="Close" />
-                            <span class="input-group-btn">
-                                <button type="button" class="btn btn-info" ng-disabled="frmShiftPlan.adminPass.$error.required && editresetbutton!=='Reset' "  ng-click="authorizeRosterEdit(adminPassword)">{{editresetbutton}}</button>
-                            </span>
-                        </p>
-                    </div>
-                </div>
-                <alert class="col-md-5" ng-show="!membersInCurrentShift.length && !membersInPreviousShift.length" type="info"><strong>No data available.</strong></alert>
-                <accordion close-others="false" ng-show="membersInCurrentShift.length || membersInPreviousShift.length">
-                    <accordion-group heading="Members in shift" is-open="true">
-                        <table class="table table-striped table-condensed" ng-show="membersInCurrentShift.length">
-                            <thead>
-                                <tr>
-                                    <th>Location</th>
-                                    <th>Name</th>
-                                    <th>User Name</th>
-                                    <th>Tier</th>
-                                    <th>Primary Module</th>
-                                    <th>Secondary Module</th>
-                                    <th>Phone 1</th>
-                                    <th>Phone 2</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr ng-repeat="member in membersInCurrentShift | orderBy:'name'">
-                                    <td>{{member.location}}</td>
-                                    <td>{{member.name}}</td>
-                                    <td>{{member.username}}</td>
-                                    <td>{{member.tier}}</td>
-                                    <td>{{member.module1}}</td>
-                                    <td>{{member.module2}}</td>
-                                    <td>{{member.phone1}}</td>
-                                    <td>{{member.phone2}}</td>
-                                    <td>
-                                        <button ng-click="deleteEntry(member._id)" ng-show="isDeleteShow" class="btn btn-sm btn-info" >
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <span ng-show="!membersInCurrentShift.length">There are no members in the selected shift.</span>
-                        <alert class="col-md-6 alertClass" ng-show="errorMessage" type="danger" style="text-align:center"><strong>{{errorMessage}}</strong></alert>
-                    </accordion-group>
-                    <accordion-group heading="Members available from previous shift" is-open="true" ng-show="membersInPreviousShift.length">
-                        <table class="table table-striped table-condensed">
-                            <thead>
-                                <tr>
-                                    <th>Location</th>
-                                    <th>Name</th>
-                                    <th>User Name</th>
-                                    <th>Tier</th>
-                                    <th>Primary Module</th>
-                                    <th>Secondary Module</th>
-                                    <th>Phone 1</th>
-                                    <th>Phone 2</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr ng-repeat="member in membersInPreviousShift | orderBy:'name'">
-                                    <td>{{member.location}}</td>
-                                    <td>{{member.name}}</td>
-                                    <td>{{member.username}}</td>
-                                    <td>{{member.tier}}</td>
-                                    <td>{{member.module1}}</td>
-                                    <td>{{member.module2}}</td>
-                                    <td>{{member.phone1}}</td>
-                                    <td>{{member.phone2}}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </accordion-group>
-                </accordian>
-            </form>
-        </tab>
-        <tab heading="Record Attendance">
-            <form class="panel-body" name="frmAttendanceRecorder" ng-controller="attendanceRecorderController"  ng-submit="submit()" novalidate>
-                <div class="row">
-                   <div class="col-md-3">
-                        <select ng-model="data.memberId" ng-options="member._id as member.name for member in members | orderBy:'name'" name="selName" class="form-control" ng-change="error='';successMessage=''">
-                            <option value=''>Select Name</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <p class="input-group">
-                            <input type="password" name="pwdPassphrase" class="form-control" ng-required="true" ng-model="data.passphrase" placeholder="Enter passphrase"/>
-                            <span class="input-group-btn">
-                                <button id="recordAttendanceButton" ng-disabled="frmAttendanceRecorder.pwdPassphrase.$error.required" type="submit" class="btn btn-success">Record Attendance</button><br/>
-                            </span>
-                        </p>
-                    </div>
-                </div>
-                <alert class="col-md-5" ng-show="successMessage" type="success"><strong>{{successMessage}}</strong></alert>
-                <alert class="col-md-6" ng-show="error" type="danger"><strong>{{error}}</strong></alert>
-            </form>
-        </tab>
-    </tabset>
+					</div>
+				</div>
+				<alert class="col-md-5" ng-show="!membersInCurrentShift.length && !membersInPreviousShift.length" type="info"><strong>No data available.</strong></alert>
+			</form>
+			<accordion close-others="false" ng-show="membersInCurrentShift.length || membersInPreviousShift.length">
+				<accordion-group is-open="true">
+					<accordion-heading>
+						<span class="blueText">Members in shift</span>
+						<span ng-show="currentShiftOwner" class="pull-right blueText">
+						Shift Owner : <b>{{currentShiftOwner}}</b>
+						</span>
+					</accordion-heading>
+					<table class="table table-striped table-condensed" ng-show="membersInCurrentShift.length">
+						<thead>
+							<tr>
+								<th>Location</th>
+								<th>Name</th>
+								<th>User Name</th>
+								<th>Tier</th>
+								<th>Role</th>
+								<th>Primary Module</th>
+								<th>Secondary Module</th>
+								<th>Phone 1</th>
+								<th>Phone 2</th>
+								<th></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="member in membersInCurrentShift | orderBy:'name'">
+								<td>{{member.location}}</td>
+								<td>{{member.name}}</td>
+								<td>{{member.username}}</td>
+								<td>{{member.tier}}</td>
+								<td>{{member.role}}</td>
+								<td>{{member.module1}}</td>
+								<td>{{member.module2}}</td>
+								<td>{{member.phone1}}</td>
+								<td>{{member.phone2}}</td>
+								<td>
+									<button ng-click="deleteEntry(member._id)" ng-show="rosterEditModeOn" class="btn btn-sm btn-info" >
+									Delete
+									</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<span ng-show="!membersInCurrentShift.length">There are no members in the selected shift.</span>
+					<alert class="col-md-6" ng-show="rosterEditError" type="danger"><strong>{{rosterEditError}}</strong></alert>
+				</accordion-group>
+				<accordion-group is-open="true" ng-show="membersInPreviousShift.length">
+					<accordion-heading>
+						<span class="blueText">Members available from previous shift</span>
+						<span ng-show="previousShiftOwner" class="pull-right blueText">
+						Shift Owner : <b>{{previousShiftOwner}}</b>
+						</span>
+					</accordion-heading>
+					<table class="table table-striped table-condensed">
+						<thead>
+							<tr>
+								<th>Location</th>
+								<th>Name</th>
+								<th>User Name</th>
+								<th>Tier</th>
+								<th>Role</th>
+								<th>Primary Module</th>
+								<th>Secondary Module</th>
+								<th>Phone 1</th>
+								<th>Phone 2</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="member in membersInPreviousShift | orderBy:'name'">
+								<td>{{member.location}}</td>
+								<td>{{member.name}}</td>
+								<td>{{member.username}}</td>
+								<td>{{member.tier}}</td>
+								<td>{{member.role}}</td>
+								<td>{{member.module1}}</td>
+								<td>{{member.module2}}</td>
+								<td>{{member.phone1}}</td>
+								<td>{{member.phone2}}</td>
+							</tr>
+						</tbody>
+					</table>
+				</accordion-group>
+			</accordion>
+		</tab>
+		<tab heading="Record Attendance">
+			<form class="panel-body" name="frmAttendanceRecorder" ng-submit="enterAttendance(inputs)" novalidate>
+				<div class="row">
+					<div class="col-md-3">
+						<select ng-model="inputs.memberId" ng-options="member._id as member.name for member in members | orderBy:'name'" class="form-control" ng-change="resetAlerts(); resetPassphrases();">
+							<option value=''>Select Name</option>
+						</select>
+					</div>
+					<div class="col-md-4">
+						<p class="input-group">
+							<input type="password" name="pwdPassphrase" class="form-control" ng-required="true" ng-model="inputs.passphrase" ng-change="resetAlerts()" placeholder="Enter Passphrase"/>
+							<span class="input-group-btn">
+								<button id="recordAttendanceButton" ng-disabled="frmAttendanceRecorder.pwdPassphrase.$error.required" type="submit" class="btn btn-info">Record Attendance</button><br/>
+							</span>
+						</p>
+					</div>
+				</div>
+				<alert class="col-md-5" ng-show="attendanceSuccess" type="info"><strong>{{attendanceSuccess}}</strong></alert>
+				<alert class="col-md-6" ng-show="attendanceError" type="danger"><strong>{{attendanceError}}</strong></alert>
+			</form>
+			<form class="panel-body" name="frmOwnerRecorder" ng-submit="markShiftOwner(inputs)" novalidate>
+				<div class="shiftSelect">Select the shift owner for the current shift : </div>
+				<br>
+				<div class="row">
+					<div class="col-md-3">
+						<select ng-model="inputs.ownerId" ng-options="member._id as member.name for member in membersInCurrentShift | orderBy:'name'" class="form-control" ng-change="resetAlerts(); resetPassphrases();">
+							<option value=''>Select Name</option>
+						</select>
+					</div>
+					<div class="col-md-4">
+						<p class="input-group">
+							<input type="password" name="pwdPassphrase" class="form-control" ng-required="true" ng-model="inputs.ownerPassphrase" ng-change="resetAlerts()" placeholder="Enter Passphrase"/>
+							<span class="input-group-btn">
+								<button id="recordShiftOwnerButton" ng-disabled="frmOwnerRecorder.pwdPassphrase.$error.required" type="submit" class="btn btn-info">Update ShiftOwner</button><br/>
+							</span>
+						</p>
+					</div>
+				</div>
+				<alert class="col-md-5" ng-show="shiftOwnerSuccess" type="info"><strong>{{shiftOwnerSuccess}}</strong></alert>
+				<alert class="col-md-6" ng-show="shiftOwnerError" type="danger"><strong>{{shiftOwnerError}}</strong></alert>
+			</form>
+		</tab>
+		<tab heading="Report">
+			<form class="panel-body" ng-controller="ReportController" ng-submit="" novalidate>
+				<div class="row">
+					<div class="col-md-4">
+						<p class="input-group">
+							<span class="input-group-addon"><strong>From : </strong></span>
+							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputs.report.startDate" is-open="startDate.opened" ng-required="true" close-text="Close" />
+							<span class="input-group-btn">
+								<button type="button" class="btn btn-default" ng-click="startDate.openDatePicker($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+							</span>
+						</p>
+					</div>
+					<div class="col-md-4">
+						<p class="input-group">
+							<span class="input-group-addon"><strong>To : </strong></span>
+							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputs.report.endDate" is-open="endDate.opened" ng-required="true" close-text="Close" />
+							<span class="input-group-btn">
+								<button type="button" class="btn btn-default" ng-click="endDate.openDatePicker($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+							</span>
+						</p>
+					</div>
+				</div>
+				<alert class="col-md-5" ng-show="!report.length" type="info"><strong>No data available.</strong></alert>
+				<accordion close-others="false" ng-show="report.length">
+					<accordion-group is-open="true">
+						<accordion-heading>
+							<span class="blueText">Report for the selected date range</span>
+						</accordion-heading>
+						<table ng-init="report.S1GrandTotal = 0; report.S2GrandTotal = 0; report.S3GrandTotal = 0;" class="table table-condensed table-striped report">
+							<tr ng-repeat-start="datum in report | orderBy : orderByDate">
+								<td rowspan="6"><strong>{{datum.date}}</strong></td>
+								<td></td>
+								<td><strong>S1</strong></td>
+								<td><strong>S2</strong></td>
+								<td><strong>S3</strong></td>
+								<td><strong>Total</strong></td>
+							</tr>
+							<tr>
+								<td><strong>FE</strong></td>
+								<td>{{datum.S1.FE}}</td>
+								<td>{{datum.S2.FE}}</td>
+								<td>{{datum.S3.FE}}</td>
+								<td><strong>{{datum.S1.FE + datum.S2.FE + datum.S3.FE}}</strong></td>
+							</tr>
+							<tr>
+								<td><strong>SAL</strong></td>
+								<td>{{datum.S1.SAL}}</td>
+								<td>{{datum.S2.SAL}}</td>
+								<td>{{datum.S3.SAL}}</td>
+								<td><strong>{{datum.S1.SAL + datum.S2.SAL + datum.S3.SAL}}</strong></td>
+							</tr>
+							<tr>
+								<td><strong>UC-UP</strong></td>
+								<td>{{datum.S1.UCUP}}</td>
+								<td>{{datum.S2.UCUP}}</td>
+								<td>{{datum.S3.UCUP}}</td>
+								<td><strong>{{datum.S1.UCUP + datum.S2.UCUP + datum.S3.UCUP}}</strong></td>
+							</tr>
+							<tr>
+								<td><strong>UPAS</strong></td>
+								<td>{{datum.S1.UPAS}}</td>
+								<td>{{datum.S2.UPAS}}</td>
+								<td>{{datum.S3.UPAS}}</td>
+								<td><strong>{{datum.S1.UPAS + datum.S2.UPAS + datum.S3.UPAS}}</strong></td>
+							</tr>
+							<tr ng-repeat-end>
+								<td><strong>Total</strong></td>
+								<td ng-init="datum.S1Total = datum.S1.FE + datum.S1.SAL + datum.S1.UCUP + datum.S1.UPAS; report.S1GrandTotal = report.S1GrandTotal + datum.S1Total;"><strong>{{datum.S1Total}}</strong></td>
+								<td ng-init="datum.S2Total = datum.S2.FE + datum.S2.SAL + datum.S2.UCUP + datum.S2.UPAS; report.S2GrandTotal = report.S2GrandTotal + datum.S2Total;"><strong>{{datum.S2Total}}</strong></td>
+								<td ng-init="datum.S3Total = datum.S3.FE + datum.S3.SAL + datum.S3.UCUP + datum.S3.UPAS; report.S3GrandTotal = report.S3GrandTotal + datum.S3Total;"><strong>{{datum.S3Total}}</strong></td>
+								<td><strong>{{datum.S1Total + datum.S2Total + datum.S3Total}}</strong></td>
+							</tr>
+							<tr>
+								<td></td>
+								<td><strong>GrandTotal</strong></td>
+								<td><strong>{{report.S1GrandTotal}}</strong></td>
+								<td><strong>{{report.S2GrandTotal}}</strong></td>
+								<td><strong>{{report.S3GrandTotal}}</strong></td>
+								<td><strong>{{report.S1GrandTotal + report.S2GrandTotal + report.S3GrandTotal}}</strong></td>
+							</tr>
+						</table>
+					</accordion-group>
+				</accordion>
+			</form>
+		</tab>
+	</tabset>
 </body>
 </html>
