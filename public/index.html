@@ -390,6 +390,10 @@
 				$event.stopPropagation();
 				$scope.endDate.opened=true;
 			};
+			$scope.orderByDate=function (datum) {
+				var date=new Date(datum.date);
+				return new Date(date.getFullYear(),date.getMonth(),date.getDate());
+			};
 		}]);
 	</script>
 	<style>
@@ -621,7 +625,7 @@
 							<span class="blueText">Report for the selected date range</span>
 						</accordion-heading>
 						<table ng-init="report.S1GrandTotal = 0; report.S2GrandTotal = 0; report.S3GrandTotal = 0;" class="table table-condensed table-striped report">
-							<tr ng-repeat-start="datum in report | orderBy : 'date'">
+							<tr ng-repeat-start="datum in report | orderBy : orderByDate">
 								<td rowspan="6"><strong>{{datum.date}}</strong></td>
 								<td></td>
 								<td><strong>S1</strong></td>
