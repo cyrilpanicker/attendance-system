@@ -1,3 +1,6 @@
+// this file was created to modify existing entries in database when the app needed a rewrite.
+// this file should not be run.
+
 var getShiftDetailsFromDate=function (date) {
 
 	var shiftDetails={};
