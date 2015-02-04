@@ -332,18 +332,31 @@ var getReport=function (db,startDate,endDate) {
 
 			for (var i = shifts.length - 1; i >= 0; i--) {
 				(function (i) {
-					var shiftUpdated=getMembersInShift(db,{
+					var membersUpdated=getMembersInShift(db,{
 						shift:shifts[i],
 						year:date.getFullYear(),
 						month:date.getMonth(),
 						day:date.getDate()
 					})
 					.then(function(members){
-						datum[shifts[i]]=getGroupedMembers(members);
+						datum[shifts[i]].members=getGroupedMembers(members);
 						return Promise.resolve();
 					},function(error){
 						return Promise.reject(error);
 					});
+					var ownerUpdated=getOwner(db,{
+						shift:shifts[i],
+						year:date.getFullYear(),
+						month:date.getMonth(),
+						day:date.getDate()
+					})
+					.then(function(owner){
+						datum[shifts[i]].owner=owner.name;
+						return Promise.resolve();
+					},function(error){
+						return Promise.reject(error);
+					});
+					var shiftUpdated=Promise.all([membersUpdated,ownerUpdated]);
 					datumUpdated.push(shiftUpdated);
 				})(i);
 			};
