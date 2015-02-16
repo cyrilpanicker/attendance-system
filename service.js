@@ -35,6 +35,30 @@ var authenticateMember=function (db,memberId,passphrase) {
 	})
 };
 
+var enterBridgeDetails=function (db,bridgename,selectkeywords,year,month,day,duration,primaryParticipants,secondaryParticipants,briefsummary,solution,OBUjira,SGjira,RCAjira){
+	return dbService.insert(db,'bridgeDetails',{
+				bridgename:bridgename,
+				selectkeywords:selectkeywords,
+				year:year,
+				month:month,
+				day:day,
+				duration:duration,
+				primaryParticipants:primaryParticipants,
+				secondaryParticipants:secondaryParticipants,
+				briefsummary:briefsummary,
+				solution:solution,
+				OBUjira:OBUjira,
+				SGjira:SGjira,
+				RCAjira:RCAjira
+			})
+    .then(function (){
+		return Promise.resolve('Bridge Details Submitted Successfully.');
+	},function (){
+		return Promise.reject('Database error occured while saving Bridge details');
+	});
+    
+};
+
 var enterAttendance=function (db,memberId,passphrase) {
 
 	var shiftDetails=getShiftDetails();
@@ -390,7 +414,8 @@ module.exports=exports={
 	deleteEntry:deleteEntry,
 	getMembersInShift:getMembersInShift,
 	getShiftDetails:getShiftDetails,
-	getReport:getReport
+	getReport:getReport,
+	enterBridgeDetails:enterBridgeDetails
 };
 
 // var getShiftTimings=function (shift,year,month,day) {
