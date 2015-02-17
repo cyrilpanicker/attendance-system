@@ -128,8 +128,8 @@ db.open(function (error,db) {
 		});
 
 		app.post('/enterBridge',function (request,response){
-			service.enterBridgeDetails(db,request.body.bridgename,request.body.selectkeywords,request.body.year,request.body.month,
-				request.body.day,request.body.duration,request.body.primaryParticipants,request.body.secondaryParticipants,request.body.briefsummary,request.body.solution,
+			service.enterBridgeDetails(db,request.body.bridgename,request.body.bridgeType,request.body.bridgeTime,request.body.shift,request.body.selectkeywords,request.body.year,request.body.month,
+				request.body.day,request.body.duration,request.body.primaryParticipants,request.body.secondaryParticipants,request.body.briefsummary,request.body.solution,request.body.contactDL,
 				request.body.OBUjira,request.body.SGjira,request.body.RCAjira)
 			.then(function (message){
 				response.send(message);

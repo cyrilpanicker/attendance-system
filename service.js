@@ -35,9 +35,25 @@ var authenticateMember=function (db,memberId,passphrase) {
 	})
 };
 
-var enterBridgeDetails=function (db,bridgename,selectkeywords,year,month,day,duration,primaryParticipants,secondaryParticipants,briefsummary,solution,OBUjira,SGjira,RCAjira){
+var enterBridgeDetails=function (db,bridgename,bridgeType,bridgeTime,shift,selectkeywords,year,month,day,duration,primaryParticipants,secondaryParticipants,briefsummary,solution,contactDL,OBUjira,SGjira,RCAjira){
+	return getOwner(db,
+		        {shift:shift,
+				year:year,
+				month:month,
+				day:day})
+   .then(function (owner){
+		var ShiftOwner;
+		if (owner && owner.name) {
+			ShiftOwner = owner.name;
+			
+		}else{
+               ShiftOwner = "NA";
+		}
 	return dbService.insert(db,'bridgeDetails',{
 				bridgename:bridgename,
+				bridgeType:bridgeType,
+				bridgeTime:bridgeTime,
+				shift:shift,
 				selectkeywords:selectkeywords,
 				year:year,
 				month:month,
@@ -47,16 +63,24 @@ var enterBridgeDetails=function (db,bridgename,selectkeywords,year,month,day,dur
 				secondaryParticipants:secondaryParticipants,
 				briefsummary:briefsummary,
 				solution:solution,
+				contactDL:contactDL,
 				OBUjira:OBUjira,
 				SGjira:SGjira,
-				RCAjira:RCAjira
+				RCAjira:RCAjira,
+				ShiftOwner:ShiftOwner
 			})
     .then(function (){
 		return Promise.resolve('Bridge Details Submitted Successfully.');
 	},function (){
 		return Promise.reject('Database error occured while saving Bridge details');
 	});
-    
+ },function (error){
+		if (!error) {
+			return Promise.reject('Database error occured while saving Bridge details');
+		} else {
+			return Promise.reject(error);
+		}
+	});   
 };
 
 var enterAttendance=function (db,memberId,passphrase) {

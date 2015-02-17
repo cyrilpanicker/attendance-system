@@ -144,6 +144,9 @@
 					url: "/enterBridge",
 					data:{
 						bridgename: input.bridgename,
+						bridgeType:input.bridgeType,
+						bridgeTime:input.bridgeTime,
+						shift:input.shift,
 						selectkeywords:input.selectkeywords,
 						year: year,
 						month: month,
@@ -153,6 +156,7 @@
 						secondaryParticipants:input.participantsSecondary,
 						briefsummary: input.briefsummary,
 						solution: input.solution,
+						contactDL:input.contactDL,
 						OBUjira: input.OBUjira,
 						SGjira: input.SGjira,
 						RCAjira: input.RCAjira
@@ -287,6 +291,16 @@
 				shiftTiming: 'S3 - 07:00pm to 04:15am CST'
 			}];
 
+			$scope.bridgeTypes = [{
+				type: 'Production Issue',
+				id: '1'
+			}, {
+				type: 'Deployment',
+				id: '2'
+            }, {
+				type: 'Internal Bridge',
+				id: '3'
+            }];
 			$scope.keywords = [{
 				keywordName: 'FE',
 				id: '1'
@@ -312,7 +326,7 @@
 				keywordName: 'OMS',
 				id: '8'
 			},{
-				keywordName: 'Other Thired Party',
+				keywordName: 'Other Third Party',
 				id: '9'
 			},{
 				keywordName: 'Server issues',
@@ -326,6 +340,45 @@
 			},{
 				keywordName: 'URL Poll Failures',
 				id: '13'
+			},{
+				keywordName: 'SHARP',
+				id: '14'
+			},{
+				keywordName: 'Browse',
+				id: '15'
+			},{
+				keywordName: 'WCS',
+				id: '16'
+			},{
+				keywordName: 'Bin Lookup',
+				id: '17'
+			},{
+				keywordName: 'IRS',
+				id: '18'
+			},{
+				keywordName: 'ISS',
+				id: '19'
+			},{
+				keywordName: 'PostOrder',
+				id: '20'
+			},{
+				keywordName: 'PROFILE',
+				id: '21'
+			},{
+				keywordName: 'RDM',
+				id: '22'
+			},{
+				keywordName: 'SOLRX',
+				id: '23'
+			},{
+				keywordName: 'SPIN',
+				id: '24'
+			},{
+				keywordName: 'Taxware',
+				id: '24'
+			},{
+				keywordName: 'DPS',
+				id: '25'
 			}];
 			$scope.disableRosterEditMode=function () {
 				$scope.rosterEditModeOn = false;
@@ -482,7 +535,10 @@
                 	|| input.duration ==="" || input.duration=== undefined 
                 	|| input.participantsPrimary==="" || input.participantsPrimary=== undefined
                 	|| input.briefsummary ==="" ||input.briefsummary=== undefined
-                	|| input.solution==="" || input.solution === undefined){
+                	|| input.solution==="" || input.solution === undefined
+                	||input.bridgeType ==="" || input.bridgeType === undefined
+                	||input.bridgeTime ==="" || input.bridgeTime === undefined
+                	||input.shift ==="" || input.shift === undefined){
                            $scope.bridgeMandatoryFieldsError = true;
                  }else if(input.selectkeywords === undefined ||(input.selectkeywords && input.selectkeywords.length === 0)){
                          $scope.bridgeMandatoryFieldsError = true;
@@ -498,10 +554,16 @@
                  	if(input.RCAjira ===""|| input.RCAjira === undefined){
                  		input.RCAjira="NA";
                  	}
+                 	if(input.contactDL ===""|| input.contactDL === undefined){
+                 		input.contactDL="NA";
+                 	}
                  	if(input.participantsSecondary === ""
                  		|| input.participantsSecondary=== undefined){
                  		input.participantsSecondary="NA";
                  	}
+                 	if(input.shift ==="S3"){
+				    input.dateOfbridge.setDate(input.dateOfbridge.getDate()-1);
+				    }
                  	var year = input.dateOfbridge.getFullYear();
 				    var month = input.dateOfbridge.getMonth();
 				    var day = input.dateOfbridge.getDate();
@@ -902,6 +964,16 @@
 		  <tab heading="Bridge Entry" ng-controller="AttendanceController">
                        <h3 class="align-Center blueText"><strong>Bridge Details Entry</strong></h3>
                            <form class="panel-body" name="frmBridgeDetails" novalidate>
+                           	   <div class="row align-Center">
+                                     <div class="col-md-3">
+                                           <span class="blueText">Bridge Type*</span>
+                                     </div>
+                                     <div class="col-md-4">
+                                         <select ng-model="inputsbridge.bridgeType" ng-options="bridge.type as bridge.type for bridge in bridgeTypes" class="form-control shiftDropdown">
+                                                 <option value="">Bridge Type</option>
+                                         </select>
+                                     </div>
+                                </div><br>
                                 <div class="row align-Center">
                                      <div class="col-md-3">
                                            <span class="blueText">Bridge Name*</span>
@@ -923,6 +995,22 @@
                                          </p>
                                     </div>
                                  </div>
+                                  <div class="row align-Center">
+                                     <div class="col-md-3">
+                                           <span class="blueText">Shift in which bridge started*</span>
+                                     </div>
+                                     <div class="col-md-4">
+                                         <select ng-model="inputsbridge.shift" ng-options="shift.shiftNo as shift.shiftNo for shift in shifts" class="form-control shiftDropdown">
+                                                 <option value="">Shifts</option>
+                                         </select>
+                                     </div>
+                                      <div class="col-md-2">
+                                      	  <span class="blueText"> Start Time (in IST)*</span>
+                                      </div>
+                                      <div class="col-md-2">
+                                      	    <input type="time" ng-model="inputsbridge.bridgeTime" placeholder ="Bridge Name">
+                                      </div>
+                                </div><br>
                                  <div class="row align-Center">
                                      <div class="col-md-3">
                                          <span class="blueText">Duration (in hours)*</span>
@@ -946,7 +1034,7 @@
                                   </div><br>
                                       <div class="row align-Center">
                                           <div class="col-md-3">
-                                            <span class="blueText">Primary Participants from Team(Active Involvement):*</span>
+                                            <span class="blueText">Primary Participants (Active Involvement):*</span>
                                            </div>
                                        <div class="col-md-4">
                                        	 <select ng-model="inputsbridge.participantsPrimary" ng-options="member._id as member.name for member in members | orderBy:'name'"class="form-control shiftDropdown" multiple="multiple">
@@ -956,7 +1044,7 @@
                                        </div><br>
                                         <div class="row align-Center">
                                           <div class="col-md-3">
-                                            <span class="blueText">Secondary Participants from Team:
+                                            <span class="blueText">Secondary Participants :
                                             </span>
                                            </div>
                                        <div class="col-md-4">
@@ -980,6 +1068,14 @@
                                             <div class="col-md-4">
                                                 <textarea rows="4" placeholder ="RCA and Solution" ng-model="inputsbridge.solution" cols="50"></textarea>
                                              </div>
+                                    </div><br>
+                                      <div class="row align-Center">
+                                            <div class="col-md-3">
+                                                  <span class="blueText">Contacted DLs (If any):</span>
+                                            </div>
+                                        <div class="col-md-4">
+                                             <input placeholder ="Contacted DLs" ng-model="inputsbridge.contactDL" size="50"></input>
+                                        </div>
                                     </div><br>
                                         <div class="row align-Center">
                                              <div class="col-md-3">
