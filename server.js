@@ -138,6 +138,17 @@ db.open(function (error,db) {
 			});
 		});
 
+		app.get('/bridgeSearch',function (request,response){
+			var startDate=new Date(parseInt(request.query.startYear),parseInt(request.query.startMonth),parseInt(request.query.startDay));
+			var endDate=new Date(parseInt(request.query.endYear),parseInt(request.query.endMonth),parseInt(request.query.endDay));
+			service.getBridge(db,startDate,endDate)
+			.then(function (message){
+				response.send(message);
+			}, function (error){
+				response.status(500).send(error);
+			});
+		});
+
 		app.listen(8000,function () {
 			console.log('server listening at port 8000');
 		});

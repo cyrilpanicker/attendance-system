@@ -429,6 +429,80 @@ var getReport=function (db,startDate,endDate) {
 	});
 };
 
+var getBridge=function (db,startDate,endDate) {
+
+	var report=[];
+	var reportComplete=[];
+
+	for(var date=startDate; date<=endDate; date=addDays(date,1)){
+
+		(function (date) {
+			var datum={};
+			var datumUpdated=[];
+
+			datum.date=date.getFullYear()+'/'+(parseInt(date.getMonth())+1)+'/'+date.getDate();
+
+              var dayBridge = getBridgesInDay(db,{
+						year:date.getFullYear(),
+						month:date.getMonth(),
+						day:date.getDate()
+					})
+                 .then(function(bridges){
+						datum.bridges = bridges;
+						if(bridges && bridges.length >0){
+							datum.showData = true;
+							datum.noOfBridges = bridges.length;
+						}else{
+							datum.showData = false;
+						}
+						return Promise.resolve();
+					},function(error){
+						return Promise.reject(error);
+					});
+            var bridgeUpdated=Promise.all([dayBridge])
+			.then(function(){
+				report.push(datum);
+				return Promise.resolve();
+			},function(error){
+				return Promise.reject(error);
+			})
+
+			reportComplete.push(bridgeUpdated);
+		})(date);
+	}
+
+	return Promise.all(reportComplete)
+	.then(function(){
+		return Promise.resolve(report);
+		console.log(report);
+	},function(error){
+		return Promise.reject(error);
+	});
+};
+
+var getBridgesInDay=function (db,queries) {
+	var bridges=[];
+    var dataBridge =[];
+	return dbService.get(db,'bridgeDetails',queries)
+	.then(function (entries){
+		if (!entries.length) {
+			return Promise.resolve(bridges);
+		} else {
+			dataBridge = entries;
+			/* for (var i = 0;i<= dataBridge.length - 1;i++) {
+				bridges.push(entries(i));
+			   }*/
+		}
+	  },function (){
+		return Promise.reject('db-error');
+	})
+	.then(function (){
+		return Promise.resolve(dataBridge);
+	},function (error){
+		return Promise.reject(error);
+	});
+};
+
 module.exports=exports={
 	getMembers:getMembers,
 	authenticateMember:authenticateMember,
@@ -439,7 +513,8 @@ module.exports=exports={
 	getMembersInShift:getMembersInShift,
 	getShiftDetails:getShiftDetails,
 	getReport:getReport,
-	enterBridgeDetails:enterBridgeDetails
+	enterBridgeDetails:enterBridgeDetails,
+	getBridge:getBridge
 };
 
 // var getShiftTimings=function (shift,year,month,day) {

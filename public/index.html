@@ -163,6 +163,21 @@
 					}
 				})
 			};
+				service.trackBridge = function (startDate,endDate) {
+				return $http({
+					method: 'GET',
+					url: '/bridgeSearch',
+					params: {
+						startYear:startDate.getFullYear(),
+						startMonth:startDate.getMonth(),
+						startDay:startDate.getDate(),
+						endYear:endDate.getFullYear(),
+						endMonth:endDate.getMonth(),
+						endDay:endDate.getDate()
+					}
+				});
+			};
+
 			return service;
 
 		}])
@@ -173,6 +188,7 @@
 			$scope.bridgeMandatoryFieldsError =false;
 			$scope.bridgeSuccess = false;
 			$scope.isDisabled = false;
+			$scope.showBridgeReport = true;
 			var logResponseToConsole = function(response) {
 				console.log(response.data);
 			};
@@ -279,6 +295,7 @@
 				report:{}
 			};
 			$scope.report=[];
+			$scope.bridgeReport=[];
 
 			$scope.shifts = [{
 				shiftNo: 'S1',
@@ -587,6 +604,44 @@
              	$scope.bridgeMandatoryFieldsError =false;
              }
 			
+			$scope.searchBridge = function(inputsBridgeReport,advanceSearch){
+               if(!(inputsBridgeReport==="" ||inputsBridgeReport===undefined)){
+                        if(!(inputsBridgeReport.endDate==="" || inputsBridgeReport.endDate=== undefined
+                	       ||inputsBridgeReport.startDate ==="" ||inputsBridgeReport.startDate === undefined)){
+                	         $scope.bridgesearchFieldsError= false;
+                	         Service.trackBridge(inputsBridgeReport.startDate,inputsBridgeReport.endDate)
+                	         .then(function(response){
+                	         	console.log(response.data);
+                	         	$scope.bridgeReport = response.data;
+                	         	var bridgeReport = response.data;
+                	         	if(bridgeReport && bridgeReport.length >0){
+                	         	  for (var i = bridgeReport.length - 1; i >= 0; i--) {
+                	         	  	if(bridgeReport[i].showData && bridgeReport[i].showData === true){
+                	         	  		$scope.showBridgeReport = true;
+                	         	  		break;
+                	         	  	}else{
+             		 				   $scope.showBridgeReport = false;
+             		 			    }                                 
+                                  };
+                                }else{
+                                	$scope.showBridgeReport = false;
+                                }
+                	         },function(errorResponse){
+                        
+                 	         });
+                	      }else{
+                           $scope.bridgesearchFieldsError= true;
+                          return false;
+                       }
+                }
+                else{
+                    $scope.bridgesearchFieldsError= true;
+               }
+			};
+
+			$scope.searchAdvance = function(){
+               return false;
+			};
 
 			$scope.adminOptions = [{
 				option: 'Report View'
@@ -657,6 +712,10 @@
 		}
 		.shiftDropdown{
 			width: 250px;
+		}
+		.myclass{
+			margin-right: 400px;
+            margin-left: 15px;
 		}
 		.alertClass{
 			margin-left: 22%;
@@ -1114,6 +1173,91 @@
                                                <alert class="col-md-5" ng-show="bridgeSuccess" type="info"><strong>{{bridgeDetailsSuccess}}</strong></alert>
                                        </div>
            </form>
+      </tab>
+      <tab heading="Bridge Tracking" ng-controller="ReportController">
+      	<form class="panel-body" name="frmBridgeReport" novalidate>
+				<div class="row align-Center">
+					<div class="col-md-4">
+						<p class="input-group">
+							<span class="input-group-addon"><strong>From : </strong></span>
+							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputsBridgeReport.startDate" is-open="startDate.opened" ng-required="true" close-text="Close" />
+							<span class="input-group-btn">
+								<button type="button" class="btn btn-default" ng-click="startDate.openDatePicker($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+							</span>
+						</p>
+					</div>
+					<div class="col-md-4">
+						<p class="input-group">
+							<span class="input-group-addon"><strong>To : </strong></span>
+							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputsBridgeReport.endDate" is-open="endDate.opened" ng-required="true" close-text="Close" />
+							<span class="input-group-btn">
+								<button type="button" class="btn btn-default" ng-click="endDate.openDatePicker($event)"><i class="glyphicon glyphicon-calendar"></i></button>
+							</span>
+						</p>
+					</div>
+			    </div><br><br> 
+			    <div class="row align-Center myclass">
+                        <button type="button" class="btn btn-primary" ng-click="searchBridge(inputsBridgeReport)" ng-disabled="{{isDisabled}}">
+                                 <strong>Search</strong>
+                        </button>
+                </div><br>
+                <div class="row align-Center">
+                        <alert class="col-md-5" ng-show="bridgesearchFieldsError" type="danger"><strong>Enter required fields to search bridges.</strong></alert>
+                	    <alert class="col-md-5" ng-show="!showBridgeReport" type="info"><strong>No data available.</strong></alert>
+                </div>
+		<accordion close-others="false" ng-show="bridgeReport.length && showBridgeReport">
+					<accordion-group is-open="true">
+						<accordion-heading>
+							<span class="blueText">Bridges for the selected date range</span>
+						</accordion-heading>
+						<table border="1" border-color="black" class="table table-condensed table-striped report" ng-repeat-start="bridageDay in bridgeReport | orderBy : orderByDate" ng-show="bridageDay.showData">
+							<tr ng-repeat-start="bridge in bridageDay.bridges">
+								<td rowspan="8" width="10%"><strong>{{bridageDay.date}}</strong></td>
+								<td width="30%">Bridge Type :</td>
+								<td  colspan="4"><strong>{{bridge.bridgeType}}</strong></td>
+							</tr>
+							<tr>
+								<td width="30%">Bridge Name :</td>
+								<td colspan="4"><strong>{{bridge.bridgename}}</strong></td>
+							</tr>
+							<tr>
+								<td width="30%">Bridge Start Time(24 hours format in IST) :</td>
+								<td width="20%"><strong>{{bridge.bridgeTime}}</strong></td>
+								<td width="20%">Total duration :</td>
+								<td colspan="3"><strong>{{bridge.duration}}</strong> Hours</td>
+							</tr>	
+							<tr>
+								<td width="30%">Shift:</td>
+								<td width="20%"><strong>{{bridge.shift}}</strong></td>
+								<td width="20%">Shift Owner:</td>
+								<td colspan="3"><strong>{{bridge.ShiftOwner}}</strong></td>
+							</tr>
+							<tr>
+								<td width="20%">Bridge Summary:</td>
+								<td colspan="3">{{bridge.briefsummary}}</td>
+							</tr>
+							<tr>
+								<td width="30%">RCA and Solution :</td>
+								<td colspan="4">{{bridge.solution}}</td>
+							</tr>
+							<tr>
+								<td width="30%">DLs contacted :</td>
+								<td width="20%"><strong>{{bridge.contactDL}}</strong></td>
+								<td width="20%">SG Jira :</td>
+								<td colspan="3"><strong>{{bridge.SGjira}}</strong></td>
+							</tr>
+							<tr>
+								<td width="30%">RCA Jira :</td>
+								<td width="20%"><strong>{{bridge.RCAjira}}</strong></td>
+								<td width="20%">OBU/CHNG Jira if any:</td>
+								<td colspan="3"><strong>{{bridge.OBUjira}}</strong></td>
+							</tr>
+							<tr ng-repeat-end>
+						</table>
+						<table ng-repeat-end>
+					</accordion-group>
+				</accordion>
+		  </form>				
       </tab>
 	</tabset>
 </body>
