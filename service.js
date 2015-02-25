@@ -36,6 +36,7 @@ var authenticateMember=function (db,memberId,passphrase) {
 };
 
 var enterBridgeDetails=function (db,bridgename,bridgeType,bridgeTime,shift,selectkeywords,year,month,day,duration,primaryParticipants,secondaryParticipants,briefsummary,solution,contactDL,OBUjira,SGjira,RCAjira){
+	var bridgeTimeCST = timeConverterISTtoCST(bridgeTime);
 	return getOwner(db,
 		        {shift:shift,
 				year:year,
@@ -52,7 +53,7 @@ var enterBridgeDetails=function (db,bridgename,bridgeType,bridgeTime,shift,selec
 	return dbService.insert(db,'bridgeDetails',{
 				bridgename:bridgename,
 				bridgeType:bridgeType,
-				bridgeTime:bridgeTime,
+				bridgeTime:bridgeTimeCST,
 				shift:shift,
 				selectkeywords:selectkeywords,
 				year:year,
@@ -81,6 +82,32 @@ var enterBridgeDetails=function (db,bridgename,bridgeType,bridgeTime,shift,selec
 			return Promise.reject(error);
 		}
 	});   
+};
+
+var timeConverterISTtoCST = function(ISTtime){
+	    var timeStr = ISTtime;
+		var parts = timeStr.split(':');
+		var hour = parseInt(parts[0].trim());
+		var minutes = parseInt(parts[1].trim());
+		hour -= config.timeConvertion.offsetHours;
+		minutes -= config.timeConvertion.offsetMinuts;
+
+		if(hour <= 0){
+		    hour += 24;
+		   }
+		 if(minutes < 0){
+		  	hour = hour -1;
+		  	minutes = 60 + minutes;
+		  }
+		  if( minutes === 60){
+		  	hour = hour +1;
+		  	minutes = 00;
+		  }
+
+		timeStr = hour + ':' + minutes;
+
+		return timeStr;
+
 };
 
 var enterAttendance=function (db,memberId,passphrase) {

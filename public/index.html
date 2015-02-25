@@ -618,6 +618,31 @@
                 	         	  for (var i = bridgeReport.length - 1; i >= 0; i--) {
                 	         	  	if(bridgeReport[i].showData && bridgeReport[i].showData === true){
                 	         	  		$scope.showBridgeReport = true;
+                	         	  			/*if(bridgeReport[i].bridges && bridgeReport[i].bridges.length >0){
+                	         	  			for(var j=0;j<=bridgeReport[i].bridges.length -1;j++){
+                                                    var ISTtime =bridgeReport[i].bridges[j].bridgeTime;
+                                                    var timeStr = ISTtime;
+													var parts = timeStr.split(':');
+													var hour = parseInt(parts[0].trim());
+													var minutes = parseInt(parts[1].trim());
+													hour -= 11;
+													minutes +=30;
+
+													if(hour <= 0){
+													    hour -= 24;
+												       }
+												      if(minutes === 60){
+												      	hour = hour +1;
+												      	minutes = 00;
+												      }else if(minutes >60){
+												      	hour = hour +1;
+												      	minutes = minutes - 60;
+												      }
+
+													timeStr = hour + ':' + minutes;
+                                                    bridgeReport[i].bridges[j].bridgeTime = timeStr;
+                	         	  			}
+                	         	  		}*/
                 	         	  		break;
                 	         	  	}else{
              		 				   $scope.showBridgeReport = false;
@@ -1096,7 +1121,7 @@
                                             <span class="blueText">Primary Participants (Active Involvement):*</span>
                                            </div>
                                        <div class="col-md-4">
-                                       	 <select ng-model="inputsbridge.participantsPrimary" ng-options="member._id as member.name for member in members | orderBy:'name'"class="form-control shiftDropdown" multiple="multiple">
+                                       	 <select ng-model="inputsbridge.participantsPrimary" ng-options="member.name as member.name for member in members | orderBy:'name'"class="form-control shiftDropdown" multiple="multiple">
                                                  <option value="">Name</option>
                                          </select>
                                          </div>
@@ -1107,7 +1132,7 @@
                                             </span>
                                            </div>
                                        <div class="col-md-4">
-                                       	 <select ng-model="inputsbridge.participantsSecondary" ng-options="member._id as member.name for member in members | orderBy:'name'"class="form-control shiftDropdown" multiple="multiple">
+                                       	 <select ng-model="inputsbridge.participantsSecondary" ng-options="member.name as member.name for member in members | orderBy:'name'"class="form-control shiftDropdown" multiple="multiple">
                                                  <option value="">Name</option>
                                          </select>
                                          </div>
@@ -1210,9 +1235,9 @@
 						<accordion-heading>
 							<span class="blueText">Bridges for the selected date range</span>
 						</accordion-heading>
-						<table border="1" border-color="black" class="table table-condensed table-striped report" ng-repeat-start="bridageDay in bridgeReport | orderBy : orderByDate" ng-show="bridageDay.showData">
+					<table border="1" border-color="black" class="table table-condensed table-striped report" ng-repeat-start="bridageDay in bridgeReport | orderBy : orderByDate : true" ng-show="bridageDay.showData">
 							<tr ng-repeat-start="bridge in bridageDay.bridges">
-								<td rowspan="8" width="10%"><strong>{{bridageDay.date}}</strong></td>
+								<td rowspan="9" width="10%"><strong>{{bridageDay.date}}</strong></td>
 								<td width="30%">Bridge Type :</td>
 								<td  colspan="4"><strong>{{bridge.bridgeType}}</strong></td>
 							</tr>
@@ -1221,7 +1246,7 @@
 								<td colspan="4"><strong>{{bridge.bridgename}}</strong></td>
 							</tr>
 							<tr>
-								<td width="30%">Bridge Start Time(24 hours format in IST) :</td>
+								<td width="30%">Bridge Start Time(24 hours format in CST) :</td>
 								<td width="20%"><strong>{{bridge.bridgeTime}}</strong></td>
 								<td width="20%">Total duration :</td>
 								<td colspan="3"><strong>{{bridge.duration}}</strong> Hours</td>
@@ -1231,6 +1256,12 @@
 								<td width="20%"><strong>{{bridge.shift}}</strong></td>
 								<td width="20%">Shift Owner:</td>
 								<td colspan="3"><strong>{{bridge.ShiftOwner}}</strong></td>
+							</tr>
+							<tr ng-model="bridge.primaryParticipants">
+								<td width="20%">Participants:</td>
+								<td colspan="3">
+									<span ng-repeat="contact in bridge.primaryParticipants">{{contact}},&nbsp</span>
+								</td>
 							</tr>
 							<tr>
 								<td width="20%">Bridge Summary:</td>

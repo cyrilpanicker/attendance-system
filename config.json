@@ -30,5 +30,9 @@
 				"min":15
 			}
 		}
+	},
+	"timeConvertion" : {
+		"offsetHours" : 11,
+		"offsetMinuts" : 30
 	}
 }
