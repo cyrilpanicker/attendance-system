@@ -35,7 +35,7 @@ var authenticateMember=function (db,memberId,passphrase) {
 	})
 };
 
-var enterBridgeDetails=function (db,bridgename,bridgeType,bridgeTime,shift,selectkeywords,year,month,day,duration,primaryParticipants,secondaryParticipants,briefsummary,solution,contactDL,OBUjira,SGjira,RCAjira){
+var enterBridgeDetails=function (db,bridgename,bridgeType,bridgeTime,shift,selectkeywords,year,month,day,duration,primaryParticipants,secondaryParticipants,briefsummary,solution,contactDL,OBUjira,SGjira,RCAjira,priority){
 	var bridgeTimeCST = timeConverterISTtoCST(bridgeTime);
 	return getOwner(db,
 		        {shift:shift,
@@ -68,7 +68,8 @@ var enterBridgeDetails=function (db,bridgename,bridgeType,bridgeTime,shift,selec
 				OBUjira:OBUjira,
 				SGjira:SGjira,
 				RCAjira:RCAjira,
-				ShiftOwner:ShiftOwner
+				ShiftOwner:ShiftOwner,
+				priority:priority
 			})
     .then(function (){
 		return Promise.resolve('Bridge Details Submitted Successfully.');

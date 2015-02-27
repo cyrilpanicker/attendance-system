@@ -159,7 +159,8 @@
 						contactDL:input.contactDL,
 						OBUjira: input.OBUjira,
 						SGjira: input.SGjira,
-						RCAjira: input.RCAjira
+						RCAjira: input.RCAjira,
+						priority:input.priority
 					}
 				})
 			};
@@ -306,6 +307,18 @@
 			}, {
 				shiftNo: 'S3',
 				shiftTiming: 'S3 - 07:00pm to 04:15am CST'
+			}];
+
+			$scope.priority = [{
+				prio: 'P0'
+			}, {
+				prio: 'P1'
+			}, {
+				prio: 'P2'
+			},{
+				prio: 'P3'
+			},{
+				prio: 'Not applicable'
 			}];
 
 			$scope.bridgeTypes = [{
@@ -549,11 +562,11 @@
 		 	      }
                 if(input.bridgename ===""  || input.bridgename === undefined 
                   ||input.dateOfbridge==="" ||input.dateOfbridge=== undefined
-                	|| input.duration ==="" || input.duration=== undefined 
+                  || input.duration ==="" || input.duration=== undefined 
                 	|| input.participantsPrimary==="" || input.participantsPrimary=== undefined
                 	|| input.briefsummary ==="" ||input.briefsummary=== undefined
                 	|| input.solution==="" || input.solution === undefined
-                	||input.bridgeType ==="" || input.bridgeType === undefined
+                	||input.bridgeType ==="" || input.bridgeType === undefined ||input.bridgeType === null
                 	||input.bridgeTime ==="" || input.bridgeTime === undefined
                 	||input.shift ==="" || input.shift === undefined || input.shift === null){
                            $scope.bridgeMandatoryFieldsError = true;
@@ -577,6 +590,9 @@
                  	if(input.participantsSecondary === ""
                  		|| input.participantsSecondary=== undefined){
                  		input.participantsSecondary="NA";
+                 	}
+                 	if(input.priority ==="" ||input.priority === undefined ||input.priority === null){
+                 		input.priority = "Not applicable";
                  	}
                  	if(input.shift ==="S3"){
 				    input.dateOfbridge.setDate(input.dateOfbridge.getDate()-1);
@@ -1101,6 +1117,16 @@
                                      </div>
                                      <div class="col-md-4">
                                          <input type="tel"  placeholder ="Duration in format hh:mm" ng-model="inputsbridge.duration" maxlength="5" size="50">
+                                     </div>
+                                 </div><br>
+                                  <div class="row align-Center">
+                                     <div class="col-md-3">
+                                           <span class="blueText">Priority</span>
+                                     </div>
+                                     <div class="col-md-4">
+                                         <select ng-model="inputsbridge.priority" ng-options="prioriti.prio as prioriti.prio for prioriti in priority" class="form-control shiftDropdown">
+                                                 <option value="">Priority</option>
+                                         </select>
                                      </div>
                                  </div><br>
                                  <div class="row align-Center">
