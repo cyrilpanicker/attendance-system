@@ -555,7 +555,7 @@
                 	|| input.solution==="" || input.solution === undefined
                 	||input.bridgeType ==="" || input.bridgeType === undefined
                 	||input.bridgeTime ==="" || input.bridgeTime === undefined
-                	||input.shift ==="" || input.shift === undefined){
+                	||input.shift ==="" || input.shift === undefined || input.shift === null){
                            $scope.bridgeMandatoryFieldsError = true;
                  }else if(input.selectkeywords === undefined ||(input.selectkeywords && input.selectkeywords.length === 0)){
                          $scope.bridgeMandatoryFieldsError = true;
