@@ -2,37 +2,37 @@
 	"timings" : {
 		"S1":{
 			"start":{
-				"hr":3,
+				"hr":4,
 				"min":0
 			},
 			"end":{
-				"hr":12,
+				"hr":13,
 				"min":15
 			}
 		},
 		"S2":{
 			"start":{
-				"hr":10,
+				"hr":11,
 				"min":15
 			},
 			"end":{
-				"hr":19,
+				"hr":20,
 				"min":30
 			}
 		},
 		"S3":{
 			"start":{
-				"hr":19,
+				"hr":20,
 				"min":0
 			},
 			"end":{
-				"hr":4,
+				"hr":5,
 				"min":15
 			}
 		}
 	},
 	"timeConvertion" : {
-		"offsetHours" : 11,
+		"offsetHours" : 10,
 		"offsetMinuts" : 30
 	}
 }
