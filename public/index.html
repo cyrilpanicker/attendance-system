@@ -840,7 +840,8 @@
 								<th>Secondary Module</th>
 								<th>Phone 1</th>
 								<th>Phone 2</th>
-								<th></th>
+								<th ng-show="rosterEditModeOn">Time</th>
+								<th ng-show="rosterEditModeOn"></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -854,8 +855,9 @@
 								<td>{{member.module2}}</td>
 								<td>{{member.phone1}}</td>
 								<td>{{member.phone2}}</td>
-								<td>
-									<button ng-click="deleteEntry(member._id)" ng-show="rosterEditModeOn" class="btn btn-sm btn-info" >
+								<td ng-show="rosterEditModeOn">{{member.entryTime}}</td>
+								<td ng-show="rosterEditModeOn">
+									<button ng-click="deleteEntry(member._id)" class="btn btn-sm btn-info" >
 									Delete
 									</button>
 								</td>

@@ -1,6 +1,7 @@
 var config=require('./config.json');
 var dbService = require('./dbService.js');
 var Promise = require('bluebird');
+require('date-utils');
 
 
 var getMembers=function (db) {
@@ -118,6 +119,7 @@ var enterAttendance=function (db,memberId,passphrase) {
 	var year=shiftDetails.currentShift.year;
 	var month=shiftDetails.currentShift.month;
 	var day=shiftDetails.currentShift.day;
+	var currentTime = shiftDetails.currentTime;
 
 	return authenticateMember(db,memberId,passphrase)
 	.then(function (){
@@ -140,7 +142,8 @@ var enterAttendance=function (db,memberId,passphrase) {
 				shift:shift,
 				year:year,
 				month:month,
-				day:day
+				day:day,
+				time:currentTime
 			});
 		}
 	},function (error){
@@ -256,6 +259,7 @@ var addDays=function(date, days) {
 var getShiftDetails=function () {
 
 	var shiftDetails={};
+	shiftDetails.currentTime = new Date().toFormat('HH:MI PP');
 	shiftDetails.currentShift={};
 	shiftDetails.previousShift={};
 	shiftDetails.previousShiftEnded=true;
@@ -346,18 +350,21 @@ var getMembersInShift=function (db,shiftDetails) {
 		} else {
 			var promises=[];
 			for (var i = entries.length - 1; i >= 0; i--) {
-				var promise=dbService.getOne(db,'members',{'_id':entries[i].memberId})
-				.then(function (member){
-					if (!member) {
-						return Promise.reject('member-details-not-found');
-					} else {
-						members.push(member);
-						return Promise.resolve();
-					}
-				},function (){
-					return Promise.reject('db-error');
-				})
-				promises.push(promise);
+				(function (i) {
+					var promise=dbService.getOne(db,'members',{'_id':entries[i].memberId})
+					.then(function (member){
+						if (!member) {
+							return Promise.reject('member-details-not-found');
+						} else {
+							member.entryTime = entries[i].time;
+							members.push(member);
+							return Promise.resolve();
+						}
+					},function (){
+						return Promise.reject('db-error');
+					})
+					promises.push(promise);
+				})(i)
 			};
 			return Promise.all(promises);
 		}
