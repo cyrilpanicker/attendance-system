@@ -1,3 +1,4 @@
+
 attendanceSystem
 ================
 
@@ -16,7 +17,7 @@ attendanceSystem
 
 
 * use the below command to start mongodb daemon process.  
-`mongod`  
+`mongod --dbpath C:\mongodb-data\db --nojournal`  
 mongodb executables need to be in path. or run the command from `/bin` directory in mongodb installation folder.
 
 
