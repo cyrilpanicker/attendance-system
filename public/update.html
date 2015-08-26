@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/bootstrap-theme.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/isteven-multi-select.css">
+	<link rel="stylesheet" type="text/css" href="/css/loading-bar.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/daterangepicker.css">
+	<script src="/scripts/jquery-2.1.4.min.js"></script>
+	<script src="/scripts/angular.min.js"></script>
+	<script src="/scripts/moment.min.js"></script>
+	<script src="/scripts/daterangepicker.js"></script>
+	<script src="/scripts/angular-daterangepicker.min.js"></script>
+	<script src="/scripts/loading-bar.min.js"></script>
+	<script src="/scripts/ui-bootstrap-tpls.min.js"></script>
+	<script src="/scripts/isteven-multi-select.js"></script>
+	<script>
+		angular.module('app', ['ui.bootstrap', 'isteven-multi-select', 'daterangepicker', 'angular-loading-bar'])
+		.config(['cfpLoadingBarProvider', function(cfpLoadingBarProvider) {
+			cfpLoadingBarProvider.includeSpinner = false;
+		}])
+		.factory('Service', ['$http', function($http) {
+			var service = {};
+			service.getMembers = function() {
+				return $http({
+					method: 'GET',
+					url: '/members',
+				});
+			};
+			return service;
+
+		}])
+		.controller('Controller', ['$scope','Service', function ($scope,Service) {
+
+			$scope.app = {
+				members:[],
+				selectedMembers:[],
+				dateRange:{
+					startDate: moment(),
+					endDate: moment().add(7,'days')
+				},
+				entryOptions:[
+					{
+						label:'S1',
+						value:'S1'
+					},
+					{
+						label:'S2',
+						value:'S2'
+					},
+					{
+						label:'S3',
+						value:'S3'
+					},
+					{
+						label:'CompOff',
+						value:'C'
+					},
+					{
+						label:'Leave',
+						value:'L'
+					},
+					{
+						label:'None',
+						value:'N'
+					}
+				],
+				multiSelectSettings:{
+					nothingSelected : "Select Members",
+					selectNone : "Select None",
+					search : "Search..."
+				}
+			};
+
+			Service.getMembers()
+			.then(function(response){
+				var members = response.data;
+				for (var i = 0; i < members.length; i++) {
+					$scope.app.members[i] = members[i];
+					$scope.app.members[i].selected = false;
+				};
+			},function(errorResponse){
+				console.log('error occured while fetching members list');
+			});
+
+			$scope.$watch('app.dateRange', function(newValue, oldValue, scope) {
+				if ($scope.app.dateRange.startDate && $scope.app.dateRange.endDate) {
+					console.log('start date : ');
+					console.dir($scope.app.dateRange.startDate.toDate());
+					console.log('end date : ');
+					console.dir($scope.app.dateRange.endDate.toDate());
+					console.log('-----------');
+				}
+			}, true);
+
+		}]);
+	</script>
+	<style>
+		.page-header{
+			background-color: rgb(204, 231, 244);
+			margin: 0px;
+			padding-bottom: 30px;
+			padding-top: 30px;
+			padding-left: 10px;
+			color: rgb(49, 112, 143);
+			text-align: center;
+		}
+		.multiSelect > button{
+			width: 100%;
+			min-height: 34px !important;
+		}
+		::-webkit-input-placeholder {
+		   text-align: center;
+		}
+
+		:-moz-placeholder { /* Firefox 18- */
+		   text-align: center;  
+		}
+
+		::-moz-placeholder {  /* Firefox 19+ */
+		   text-align: center;  
+		}
+
+		:-ms-input-placeholder {  
+		   text-align: center; 
+		}
+	</style>
+</head>
+
+<body ng-controller="Controller">
+	<h2 class="page-header"><strong>Shift Planner</strong></h2>
+	<tabset class="panel panel-heading container">
+		<tab heading="Bulk Update">
+			<p class="row">
+				<div class="col-md-3">
+					<span
+						isteven-multi-select
+						input-model="app.members"
+						output-model="app.selectedMembers"
+						button-label="name"
+						item-label="name"
+						tick-property="selected"
+						max-labels="0"
+						helper-elements="none filter"
+						search-property="name"
+						max-height="300px"
+						translation="app.multiSelectSettings"
+					>
+					</span>
+				</div>
+				<div class="col-md-3">
+					<input date-range-picker class="form-control date-picker" ng-model="app.dateRange" placeholder="Select Date Range" />
+				</div>
+				<div class="col-md-3">
+					<select ng-model="inputs.shift" ng-options="option.value as option.label for option in app.entryOptions" class="form-control">
+						<option value="">Select</option>
+					</select>
+				</div>
+				<div class="col-md-3">
+					<button class="btn btn-danger">Update</button>
+				</div>
+			</p>
+		</tab>
+	</tabset>
+</body>
+</html>
+
