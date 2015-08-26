@@ -222,7 +222,7 @@
 				report:{}
 			};
 			$scope.report=[];
-
+			$scope.maxDate=new Date();
 			$scope.shifts = [{
 				shiftNo: 'S1',
 				shiftTiming: 'S1 - 03:00am to 12:15pm CST'
@@ -300,6 +300,7 @@
 							$scope.shiftOwnerSuccess = response.data;
 							$scope.resetPassphrases();
 							updateMembersInShift();
+							updateReport();
 						}, function(errorResponse) {
 							$scope.shiftOwnerError = errorResponse.data;
 							$scope.resetPassphrases();
@@ -445,7 +446,7 @@
 				<div class="row">
 					<div class="col-md-3">
 						<p class="input-group" ng-controller="DateController">
-							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputs.date" is-open="opened" ng-required="true" close-text="Close" />
+							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputs.date" is-open="opened" ng-required="true" close-text="Close" max-date="maxDate" />
 							<span class="input-group-btn">
 								<button type="button" class="btn btn-default" ng-click="openDatePicker($event)"><i class="glyphicon glyphicon-calendar"></i></button>
 							</span>
@@ -487,7 +488,8 @@
 								<th>Secondary Module</th>
 								<th>Phone 1</th>
 								<th>Phone 2</th>
-								<th></th>
+								<th ng-show="rosterEditModeOn">Time</th>
+								<th ng-show="rosterEditModeOn"></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -501,6 +503,7 @@
 								<td>{{member.module2}}</td>
 								<td>{{member.phone1}}</td>
 								<td>{{member.phone2}}</td>
+								<td ng-show="rosterEditModeOn">{{member.entryTime}}</td>
 								<td>
 									<button ng-click="deleteEntry(member._id)" ng-show="rosterEditModeOn" class="btn btn-sm btn-info" >
 									Delete
@@ -598,7 +601,7 @@
 					<div class="col-md-4">
 						<p class="input-group">
 							<span class="input-group-addon"><strong>From : </strong></span>
-							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputs.report.startDate" is-open="startDate.opened" ng-required="true" close-text="Close" />
+							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputs.report.startDate" is-open="startDate.opened" ng-required="true" close-text="Close" max-date="maxDate" />
 							<span class="input-group-btn">
 								<button type="button" class="btn btn-default" ng-click="startDate.openDatePicker($event)"><i class="glyphicon glyphicon-calendar"></i></button>
 							</span>
@@ -607,7 +610,7 @@
 					<div class="col-md-4">
 						<p class="input-group">
 							<span class="input-group-addon"><strong>To : </strong></span>
-							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputs.report.endDate" is-open="endDate.opened" ng-required="true" close-text="Close" />
+							<input type="text" class="form-control" datepicker-popup="yyyy/MM/dd" ng-model="inputs.report.endDate" is-open="endDate.opened" ng-required="true" close-text="Close" max-date="maxDate" />
 							<span class="input-group-btn">
 								<button type="button" class="btn btn-default" ng-click="endDate.openDatePicker($event)"><i class="glyphicon glyphicon-calendar"></i></button>
 							</span>
@@ -631,37 +634,37 @@
 							</tr>
 							<tr>
 								<td><strong>FE</strong></td>
-								<td>{{datum.S1.FE}}</td>
-								<td>{{datum.S2.FE}}</td>
-								<td>{{datum.S3.FE}}</td>
-								<td><strong>{{datum.S1.FE + datum.S2.FE + datum.S3.FE}}</strong></td>
+								<td>{{datum.S1.members.FE}}</td>
+								<td>{{datum.S2.members.FE}}</td>
+								<td>{{datum.S3.members.FE}}</td>
+								<td><strong>{{datum.S1.members.FE + datum.S2.members.FE + datum.S3.members.FE}}</strong></td>
 							</tr>
 							<tr>
 								<td><strong>SAL</strong></td>
-								<td>{{datum.S1.SAL}}</td>
-								<td>{{datum.S2.SAL}}</td>
-								<td>{{datum.S3.SAL}}</td>
-								<td><strong>{{datum.S1.SAL + datum.S2.SAL + datum.S3.SAL}}</strong></td>
+								<td>{{datum.S1.members.SAL}}</td>
+								<td>{{datum.S2.members.SAL}}</td>
+								<td>{{datum.S3.members.SAL}}</td>
+								<td><strong>{{datum.S1.members.SAL + datum.S2.members.SAL + datum.S3.members.SAL}}</strong></td>
 							</tr>
 							<tr>
 								<td><strong>UC-UP</strong></td>
-								<td>{{datum.S1.UCUP}}</td>
-								<td>{{datum.S2.UCUP}}</td>
-								<td>{{datum.S3.UCUP}}</td>
-								<td><strong>{{datum.S1.UCUP + datum.S2.UCUP + datum.S3.UCUP}}</strong></td>
+								<td>{{datum.S1.members.UCUP}}</td>
+								<td>{{datum.S2.members.UCUP}}</td>
+								<td>{{datum.S3.members.UCUP}}</td>
+								<td><strong>{{datum.S1.members.UCUP + datum.S2.members.UCUP + datum.S3.members.UCUP}}</strong></td>
 							</tr>
 							<tr>
 								<td><strong>UPAS</strong></td>
-								<td>{{datum.S1.UPAS}}</td>
-								<td>{{datum.S2.UPAS}}</td>
-								<td>{{datum.S3.UPAS}}</td>
-								<td><strong>{{datum.S1.UPAS + datum.S2.UPAS + datum.S3.UPAS}}</strong></td>
+								<td>{{datum.S1.members.UPAS}}</td>
+								<td>{{datum.S2.members.UPAS}}</td>
+								<td>{{datum.S3.members.UPAS}}</td>
+								<td><strong>{{datum.S1.members.UPAS + datum.S2.members.UPAS + datum.S3.members.UPAS}}</strong></td>
 							</tr>
 							<tr ng-repeat-end>
 								<td><strong>Total</strong></td>
-								<td ng-init="datum.S1Total = datum.S1.FE + datum.S1.SAL + datum.S1.UCUP + datum.S1.UPAS; report.S1GrandTotal = report.S1GrandTotal + datum.S1Total;"><strong>{{datum.S1Total}}</strong></td>
-								<td ng-init="datum.S2Total = datum.S2.FE + datum.S2.SAL + datum.S2.UCUP + datum.S2.UPAS; report.S2GrandTotal = report.S2GrandTotal + datum.S2Total;"><strong>{{datum.S2Total}}</strong></td>
-								<td ng-init="datum.S3Total = datum.S3.FE + datum.S3.SAL + datum.S3.UCUP + datum.S3.UPAS; report.S3GrandTotal = report.S3GrandTotal + datum.S3Total;"><strong>{{datum.S3Total}}</strong></td>
+								<td ng-init="datum.S1Total = datum.S1.members.FE + datum.S1.members.SAL + datum.S1.members.UCUP + datum.S1.members.UPAS; report.S1GrandTotal = report.S1GrandTotal + datum.S1Total;"><strong>{{datum.S1Total}}</strong></td>
+								<td ng-init="datum.S2Total = datum.S2.members.FE + datum.S2.members.SAL + datum.S2.members.UCUP + datum.S2.members.UPAS; report.S2GrandTotal = report.S2GrandTotal + datum.S2Total;"><strong>{{datum.S2Total}}</strong></td>
+								<td ng-init="datum.S3Total = datum.S3.members.FE + datum.S3.members.SAL + datum.S3.members.UCUP + datum.S3.members.UPAS; report.S3GrandTotal = report.S3GrandTotal + datum.S3Total;"><strong>{{datum.S3Total}}</strong></td>
 								<td><strong>{{datum.S1Total + datum.S2Total + datum.S3Total}}</strong></td>
 							</tr>
 							<tr>

@@ -42,6 +42,7 @@ var enterAttendance=function (db,memberId,passphrase) {
 	var year=shiftDetails.currentShift.year;
 	var month=shiftDetails.currentShift.month;
 	var day=shiftDetails.currentShift.day;
+	var currentTime = shiftDetails.currentTime;
 
 	return authenticateMember(db,memberId,passphrase)
 	.then(function (){
@@ -64,7 +65,8 @@ var enterAttendance=function (db,memberId,passphrase) {
 				shift:shift,
 				year:year,
 				month:month,
-				day:day
+				day:day,
+				time:currentTime
 			});
 		}
 	},function (error){
@@ -180,6 +182,7 @@ var addDays=function(date, days) {
 var getShiftDetails=function () {
 
 	var shiftDetails={};
+	shiftDetails.currentTime = new Date().toLocaleTimeString();
 	shiftDetails.currentShift={};
 	shiftDetails.previousShift={};
 	shiftDetails.previousShiftEnded=true;
@@ -270,18 +273,21 @@ var getMembersInShift=function (db,shiftDetails) {
 		} else {
 			var promises=[];
 			for (var i = entries.length - 1; i >= 0; i--) {
-				var promise=dbService.getOne(db,'members',{'_id':entries[i].memberId})
-				.then(function (member){
-					if (!member) {
-						return Promise.reject('member-details-not-found');
-					} else {
-						members.push(member);
-						return Promise.resolve();
-					}
-				},function (){
-					return Promise.reject('db-error');
-				})
-				promises.push(promise);
+				(function (i) {
+					var promise=dbService.getOne(db,'members',{'_id':entries[i].memberId})
+					.then(function (member){
+						if (!member) {
+							return Promise.reject('member-details-not-found');
+						} else {
+							member.entryTime = entries[i].time;
+							members.push(member);
+							return Promise.resolve();
+						}
+					},function (){
+						return Promise.reject('db-error');
+					})
+					promises.push(promise);
+				})(i)
 			};
 			return Promise.all(promises);
 		}
@@ -332,18 +338,33 @@ var getReport=function (db,startDate,endDate) {
 
 			for (var i = shifts.length - 1; i >= 0; i--) {
 				(function (i) {
-					var shiftUpdated=getMembersInShift(db,{
+					var membersUpdated=getMembersInShift(db,{
 						shift:shifts[i],
 						year:date.getFullYear(),
 						month:date.getMonth(),
 						day:date.getDate()
 					})
-					.then(function(members){
-						datum[shifts[i]]=getGroupedMembers(members);
+					.then(function (members){
+						datum[shifts[i]].members=getGroupedMembers(members);
 						return Promise.resolve();
-					},function(error){
+					},function (error){
 						return Promise.reject(error);
 					});
+					var ownerUpdated=getOwner(db,{
+						shift:shifts[i],
+						year:date.getFullYear(),
+						month:date.getMonth(),
+						day:date.getDate()
+					})
+					.then(function (owner){
+						if (owner) {
+							datum[shifts[i]].owner=owner.name;
+						} 
+						return Promise.resolve();
+					},function (error){
+						return Promise.reject(error);
+					});
+					var shiftUpdated=Promise.all([membersUpdated,ownerUpdated]);
 					datumUpdated.push(shiftUpdated);
 				})(i);
 			};
