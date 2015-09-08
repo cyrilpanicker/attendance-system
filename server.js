@@ -84,6 +84,11 @@ db.open(function (error,db) {
 			});
 		});
 
+		app.post('/bulkUpdate',function (request,response) {
+			console.log(request.body);
+			response.send();
+		});
+
 		app.post('/deleteEntry',function (request,response) {
 			service.deleteEntry(db,request.body.memberId,{
 				shift:request.body.shift,

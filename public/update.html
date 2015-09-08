@@ -26,7 +26,27 @@
 			service.getMembers = function() {
 				return $http({
 					method: 'GET',
-					url: '/members',
+					url: '/members'
+				});
+			};
+			service.bulkUpdate = function (members,dateRange,option) {
+				return $http({
+					method:'POST',
+					url:'/bulkUpdate',
+					data:{
+						members:members,
+						startDate:{
+							year:dateRange.startDate.getFullYear(),
+							month:dateRange.startDate.getMonth(),
+							day:dateRange.startDate.getDate()
+						},
+						endDate:{
+							year:dateRange.endDate.getFullYear(),
+							month:dateRange.endDate.getMonth(),
+							day:dateRange.endDate.getDate()
+						},
+						option:option
+					}
 				});
 			};
 			return service;
@@ -41,17 +61,18 @@
 					startDate: moment(),
 					endDate: moment().add(7,'days')
 				},
+				selectedOption:null,
 				entryOptions:[
 					{
-						label:'S1',
+						label:'Shift 1',
 						value:'S1'
 					},
 					{
-						label:'S2',
+						label:'Shift 2',
 						value:'S2'
 					},
 					{
-						label:'S3',
+						label:'Shift 3',
 						value:'S3'
 					},
 					{
@@ -74,6 +95,21 @@
 				}
 			};
 
+			$scope.bulkUpdate = function () {
+				var selectedMembers = [];
+				var dateRange = {};
+				for (var i = $scope.app.selectedMembers.length - 1; i >= 0; i--) {
+					selectedMembers.push($scope.app.selectedMembers[i]._id);
+				};
+				dateRange.startDate = $scope.app.dateRange.startDate.toDate();
+				dateRange.endDate = $scope.app.dateRange.endDate.toDate();
+				Service.bulkUpdate(selectedMembers,dateRange,$scope.app.selectedOption);
+			};
+
+			$scope.$watch('app',function () {
+				console.dir($scope.app);
+			},true);
+
 			Service.getMembers()
 			.then(function(response){
 				var members = response.data;
@@ -84,16 +120,6 @@
 			},function(errorResponse){
 				console.log('error occured while fetching members list');
 			});
-
-			$scope.$watch('app.dateRange', function(newValue, oldValue, scope) {
-				if ($scope.app.dateRange.startDate && $scope.app.dateRange.endDate) {
-					console.log('start date : ');
-					console.dir($scope.app.dateRange.startDate.toDate());
-					console.log('end date : ');
-					console.dir($scope.app.dateRange.endDate.toDate());
-					console.log('-----------');
-				}
-			}, true);
 
 		}]);
 	</script>
@@ -154,12 +180,12 @@
 					<input date-range-picker class="form-control date-picker" ng-model="app.dateRange" placeholder="Select Date Range" />
 				</div>
 				<div class="col-md-3">
-					<select ng-model="inputs.shift" ng-options="option.value as option.label for option in app.entryOptions" class="form-control">
+					<select ng-model="app.selectedOption" ng-options="option.value as option.label for option in app.entryOptions" class="form-control">
 						<option value="">Select</option>
 					</select>
 				</div>
 				<div class="col-md-3">
-					<button class="btn btn-danger">Update</button>
+					<button class="btn btn-danger" ng-click="bulkUpdate()">Update</button>
 				</div>
 			</p>
 		</tab>
