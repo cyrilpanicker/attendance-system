@@ -112,6 +112,68 @@ var timeConverterISTtoCST = function(ISTtime){
 
 };
 
+var bulkUpdate = function (db,members,dateRange,shift) {
+	var startDate = new Date(dateRange.startDate.year,dateRange.startDate.month,dateRange.startDate.day);
+	var endDate = new Date(dateRange.endDate.year,dateRange.endDate.month,dateRange.endDate.day);
+	var promiseArray = [];
+	for (var i = members.length - 1; i >= 0; i--) {
+		for(var date = startDate; date <= endDate; date = addDays(date,1)){
+			if (shift == 'N') {
+				promiseArray.push(
+					dbService.remove(db,'entries',{
+						memberId:members[i],
+						year:date.getFullYear(),
+						month:date.getMonth(),
+						day:date.getDate()
+					})
+				);
+			} else {
+				promiseArray.push(
+					dbService.update(db,'entries',{
+						memberId:members[i],
+						year:date.getFullYear(),
+						month:date.getMonth(),
+						day:date.getDate()
+					},{
+						$set:{'shift':shift}
+					},{
+						upsert:true
+					})
+				);
+			};
+		};
+	};
+	return Promise.all(promiseArray)
+	.then(function (){
+		return Promise.resolve('bulk-update-successful');
+	},function (error){
+		if (!error) {
+			return Promise.reject('db-error');
+		} else {
+			return Promise.reject(error);
+		}
+	});
+};
+
+var getShiftPlan = function (db,_month,_year) {
+	return dbService.get(db,'entries',{
+		month:_month,
+		year:_year
+	})
+	.then(function (plan) {
+		var processedPlan = {}
+		for (var i = plan.length - 1; i >= 0; i--) {
+			if (!processedPlan[plan[i].memberId]) {
+				processedPlan[plan[i].memberId] = {};
+			};
+			processedPlan[plan[i].memberId][plan[i].day] = plan[i].shift;
+		};
+		return Promise.resolve(processedPlan);
+	},function (error) {
+		return Promise.reject('db-error');
+	});
+};
+
 var enterAttendance=function (db,memberId,passphrase) {
 
 	var shiftDetails=getShiftDetails();
@@ -549,7 +611,9 @@ module.exports=exports={
 	getShiftDetails:getShiftDetails,
 	getReport:getReport,
 	enterBridgeDetails:enterBridgeDetails,
-	getBridge:getBridge
+	getBridge:getBridge,
+	bulkUpdate:bulkUpdate,
+	getShiftPlan:getShiftPlan
 };
 
 // var getShiftTimings=function (shift,year,month,day) {

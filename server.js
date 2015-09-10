@@ -85,8 +85,21 @@ db.open(function (error,db) {
 		});
 
 		app.post('/bulkUpdate',function (request,response) {
-			console.log(request.body);
-			response.send();
+			service.bulkUpdate(db,request.body.members,request.body.dateRange,request.body.shift)
+			.then(function (message) {
+				response.send(message);
+			},function (error) {
+				response.status(500).send(error);
+			});
+		});
+
+		app.get('/shiftPlan',function (request,response) {
+			service.getShiftPlan(db,parseInt(request.query.month),parseInt(request.query.year))
+			.then(function (plan) {
+				response.send(plan);
+			},function (error) {
+				response.status(500).send(error);
+			});
 		});
 
 		app.post('/deleteEntry',function (request,response) {

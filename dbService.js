@@ -24,9 +24,9 @@ var getOne = function (db,collection,pattern) {
 	});
 };
 
-var update = function (db,collection,pattern,setterObject) {
+var update = function (db,collection,pattern,setterObject,options) {
 	return new Promise(function (resolve,reject) {
-		db.collection(collection).update(pattern,setterObject,function (error) {
+		db.collection(collection).update(pattern,setterObject,options,function (error) {
 			if (error) {
 				reject();
 			} else {
