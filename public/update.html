@@ -29,23 +29,24 @@
 					url: '/members'
 				});
 			};
-			service.bulkUpdate = function (members,dateRange,option) {
+			service.bulkUpdate = function (members,dateRange,shift) {
 				return $http({
 					method:'POST',
 					url:'/bulkUpdate',
 					data:{
 						members:members,
-						startDate:{
-							year:dateRange.startDate.getFullYear(),
-							month:dateRange.startDate.getMonth(),
-							day:dateRange.startDate.getDate()
-						},
-						endDate:{
-							year:dateRange.endDate.getFullYear(),
-							month:dateRange.endDate.getMonth(),
-							day:dateRange.endDate.getDate()
-						},
-						option:option
+						dateRange:dateRange,
+						shift:shift
+					}
+				});
+			};
+			service.getShiftPlan = function (month,year) {
+				return $http({
+					method:'GET',
+					url:'/shiftPlan',
+					params:{
+						month:month,
+						year:year
 					}
 				});
 			};
@@ -54,6 +55,10 @@
 		}])
 		.controller('Controller', ['$scope','Service', function ($scope,Service) {
 
+			var today = new Date();
+			var currentMonth = today.getMonth();
+			var currentYear = today.getFullYear();
+
 			$scope.app = {
 				members:[],
 				selectedMembers:[],
@@ -61,8 +66,9 @@
 					startDate: moment(),
 					endDate: moment().add(7,'days')
 				},
-				selectedOption:null,
-				entryOptions:[
+				datesForTheMonth:[],
+				selectedShift:null,
+				shiftOptions:[
 					{
 						label:'Shift 1',
 						value:'S1'
@@ -76,18 +82,63 @@
 						value:'S3'
 					},
 					{
-						label:'CompOff',
-						value:'C'
-					},
-					{
-						label:'Leave',
-						value:'L'
-					},
-					{
 						label:'None',
 						value:'N'
 					}
 				],
+				years:[],
+				months:[
+					{
+						label:'January',
+						value:0
+					},
+					{
+						label:'February',
+						value:1
+					},
+					{
+						label:'March',
+						value:2
+					},
+					{
+						label:'April',
+						value:3
+					},
+					{
+						label:'May',
+						value:4
+					},
+					{
+						label:'June',
+						value:5
+					},
+					{
+						label:'July',
+						value:6
+					},
+					{
+						label:'August',
+						value:7
+					},
+					{
+						label:'September',
+						value:8
+					},
+					{
+						label:'October',
+						value:9
+					},
+					{
+						label:'November',
+						value:10
+					},
+					{
+						label:'December',
+						value:11
+					}
+				],
+				selectedMonth:currentMonth,
+				selectedYear:currentYear,
 				multiSelectSettings:{
 					nothingSelected : "Select Members",
 					selectNone : "Select None",
@@ -96,19 +147,51 @@
 			};
 
 			$scope.bulkUpdate = function () {
+
 				var selectedMembers = [];
-				var dateRange = {};
 				for (var i = $scope.app.selectedMembers.length - 1; i >= 0; i--) {
 					selectedMembers.push($scope.app.selectedMembers[i]._id);
 				};
-				dateRange.startDate = $scope.app.dateRange.startDate.toDate();
-				dateRange.endDate = $scope.app.dateRange.endDate.toDate();
-				Service.bulkUpdate(selectedMembers,dateRange,$scope.app.selectedOption);
+
+				var startDate = $scope.app.dateRange.startDate.toDate();
+				var endDate = $scope.app.dateRange.endDate.toDate();
+				var selectedDateRange = {
+					startDate:{
+						year:startDate.getFullYear(),
+						month:startDate.getMonth(),
+						day:startDate.getDate()
+					},
+					endDate:{
+						year:endDate.getFullYear(),
+						month:endDate.getMonth(),
+						day:endDate.getDate()
+					}
+				};
+
+				Service.bulkUpdate(selectedMembers,selectedDateRange,$scope.app.selectedShift)
+				.then(function () {
+					updateShiftPlan(currentMonth,currentYear);
+				},function () {});
+
 			};
 
-			$scope.$watch('app',function () {
-				console.dir($scope.app);
-			},true);
+			var addDays=function(date, days) {
+				var result = new Date(date);
+				result.setDate(date.getDate() + days);
+				return result;
+			};
+
+			var updateShiftPlan = function (month,year) {
+				Service.getShiftPlan(month,year)
+				.then(function () {
+					$scope.app.datesForTheMonth = [];
+					var firstDateOfMonth = 1;
+					var lastDateOfMonth = new Date(year,month+1,0).getDate();
+					for (var i = firstDateOfMonth; i <= lastDateOfMonth; i++) {
+						$scope.app.datesForTheMonth.push(i);
+					};
+				},function () {});
+			};
 
 			Service.getMembers()
 			.then(function(response){
@@ -119,6 +202,15 @@
 				};
 			},function(errorResponse){
 				console.log('error occured while fetching members list');
+			});
+
+			for(var _year=currentYear-1;_year<=currentYear+1;_year++){
+				$scope.app.years.push(_year);
+			};
+
+			updateShiftPlan(currentMonth,currentYear);
+			$scope.$watch('app.selectedMonth+app.selectedYear',function () {
+				updateShiftPlan($scope.app.selectedMonth,$scope.app.selectedYear);
 			});
 
 		}]);
@@ -137,59 +229,83 @@
 			width: 100%;
 			min-height: 34px !important;
 		}
-		::-webkit-input-placeholder {
-		   text-align: center;
+		.main{
+			width:95%;
+			margin: 0 auto;
 		}
-
-		:-moz-placeholder { /* Firefox 18- */
-		   text-align: center;  
+		.main .action-bar{
+			margin-top: 35px;
+			margin-bottom: 35px;
 		}
-
-		::-moz-placeholder {  /* Firefox 19+ */
-		   text-align: center;  
+		.plan{
+			border: 1px solid #ddd;
 		}
-
-		:-ms-input-placeholder {  
-		   text-align: center; 
+		.plan .title{
+			background-image: linear-gradient(to bottom,#f5f5f5 0,#e8e8e8 100%);
+			border: 1px solid #ddd;
+			padding: 10px;
+			border-top-left-radius: 3px;
+    		border-top-right-radius: 3px;
 		}
 	</style>
 </head>
 
 <body ng-controller="Controller">
 	<h2 class="page-header"><strong>Shift Planner</strong></h2>
-	<tabset class="panel panel-heading container">
-		<tab heading="Bulk Update">
-			<p class="row">
-				<div class="col-md-3">
-					<span
-						isteven-multi-select
-						input-model="app.members"
-						output-model="app.selectedMembers"
-						button-label="name"
-						item-label="name"
-						tick-property="selected"
-						max-labels="0"
-						helper-elements="none filter"
-						search-property="name"
-						max-height="300px"
-						translation="app.multiSelectSettings"
-					>
-					</span>
-				</div>
-				<div class="col-md-3">
-					<input date-range-picker class="form-control date-picker" ng-model="app.dateRange" placeholder="Select Date Range" />
-				</div>
-				<div class="col-md-3">
-					<select ng-model="app.selectedOption" ng-options="option.value as option.label for option in app.entryOptions" class="form-control">
-						<option value="">Select</option>
-					</select>
-				</div>
-				<div class="col-md-3">
-					<button class="btn btn-danger" ng-click="bulkUpdate()">Update</button>
-				</div>
-			</p>
-		</tab>
-	</tabset>
+	<div class="main">
+		<div class="action-bar row">
+			<div class="col-md-3">
+				<span
+					isteven-multi-select
+					input-model="app.members"
+					output-model="app.selectedMembers"
+					button-label="name"
+					item-label="name"
+					tick-property="selected"
+					max-labels="0"
+					helper-elements="none filter"
+					search-property="name"
+					max-height="300px"
+					translation="app.multiSelectSettings"
+				>
+				</span>
+			</div>
+			<div class="col-md-3">
+				<input date-range-picker class="form-control date-picker" ng-model="app.dateRange"/>
+			</div>
+			<div class="col-md-3">
+				<select ng-model="app.selectedShift" ng-options="option.value as option.label for option in app.shiftOptions" class="form-control">
+					<option value="">Select</option>
+				</select>
+			</div>
+			<div class="col-md-3">
+				<button class="btn btn-primary" ng-click="bulkUpdate()">Update</button>
+			</div>
+		</div>
+		<div class="plan">
+			<div class="title">
+				<span>Shift plan for</span>
+				<select ng-model="app.selectedMonth" ng-options="month.value as month.label for month in app.months">
+				</select>
+				<select ng-model="app.selectedYear" ng-options="year for year in app.years">
+				</select>
+			</div>
+			<table class="table table-striped table-condensed">
+				<thead>
+					<tr>
+						<th></th>
+						<th ng-repeat="date in app.datesForTheMonth" ng-bind="date"></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>Cyril Panicker</td>
+						<td ng-repeat="date in app.datesForTheMonth" ng-bind="date"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
 </body>
 </html>
 
