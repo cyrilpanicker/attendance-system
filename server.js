@@ -5,11 +5,68 @@ var Server = require('mongodb').Server;
 var service=require('./service');
 var ObjectID = require('mongodb').ObjectID;
 
+var passport = require('passport');
+var session = require('express-session');
+var cookieParser = require('cookie-parser');
+var cookie = require('cookie');
+var LdapStrategy = require('passport-ldapauth');
+var MongoStore = require('connect-mongo')(session);
+
+var serializeLdapUser = function (user,done) {
+	done(null,{
+		userName : user.uid,
+		name : user.cn,
+		email : user.mail
+	});
+};
+
+var deserializeLdapUser = function (user,done) {
+	return done(null,user);
+};
+
+var sessionStore = new MongoStore({
+	host:'localhost',
+	port:27017,
+	db:'dashDb'
+});
+ 
+var sessionOptions = {
+	secret:'there-is-no-secret',
+	saveUninitialized: true,
+	resave:false,
+	store:sessionStore,
+	cookie:{
+		httpOnly:true,
+		maxAge:86400000
+	}
+};
+
+var ldapOptions = {
+	server: {
+		"url": "ldap://glbdirqr.global.us.shldcorp.com:389",
+		"searchBase": "ou=people,o=intra,dc=sears,dc=com",
+		"searchFilter": "(uid={{username}})",
+		"usernameField":"uid",
+		"passwordField":"userPassword"
+	}
+};
+
 var app=express();
 
 app.use(bodyParser.json());
 
 app.use(express.static('public'));
+
+app.use(cookieParser());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(session(sessionOptions));
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new LdapStrategy(ldapOptions));
+passport.serializeUser(serializeLdapUser);
+passport.deserializeUser(deserializeLdapUser);
 
 var db=new Db('dashDb',new Server('localhost',27017),{safe:true});
 db.open(function (error,db) {
@@ -165,6 +222,45 @@ db.open(function (error,db) {
 			}, function (error){
 				response.status(500).send(error);
 			});
+		});
+
+		app.post('/login',function (req,res,next) {
+			passport.authenticate('ldapauth',{session:true},function (err,user,info) {
+				if (err) {
+					res.status(500).send({message:'Ldap Connection Error'});
+				} else if (!user) {
+					res.status(403).send(info);
+				} else {
+					req.logIn(user,function (err) {
+						if (err) {
+							res.status(500).send({message:'Session Error'});
+						} else {
+							res.send({
+								userName : user.uid,
+								name : user.cn,
+								emailId : user.mail
+							});
+						}
+					});
+				}
+			})(req,res,next);
+		});
+
+		app.post('/logout',function (req,res) {
+			if (!req.user) {
+				res.status(409).send('user-not-signed-in');
+			} else {
+				req.logout();
+				res.send({message:'user-signed-out'});
+			}
+		});
+
+		app.get('/user',function (req,res,next) {
+			if (!req.user) {
+				res.send({})
+			} else {
+				res.send(req.user);
+			}
 		});
 
 		app.listen(8000,function () {
