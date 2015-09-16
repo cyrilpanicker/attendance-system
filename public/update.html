@@ -143,7 +143,8 @@
 					nothingSelected : "Select Members",
 					selectNone : "Select None",
 					search : "Search..."
-				}
+				},
+				shiftPlan:{}
 			};
 
 			$scope.bulkUpdate = function () {
@@ -170,7 +171,7 @@
 
 				Service.bulkUpdate(selectedMembers,selectedDateRange,$scope.app.selectedShift)
 				.then(function () {
-					updateShiftPlan(currentMonth,currentYear);
+					fetchShiftPlan($scope.app.selectedMonth,$scope.app.selectedYear);
 				},function () {});
 
 			};
@@ -181,16 +182,71 @@
 				return result;
 			};
 
-			var updateShiftPlan = function (month,year) {
+			var fetchShiftPlan = function (month,year) {
+
+				$scope.app.datesForTheMonth = [];
+				var firstDateOfMonth = 1;
+				var lastDateOfMonth = new Date(year,month+1,0).getDate();
+				for (var i = firstDateOfMonth; i <= lastDateOfMonth; i++) {
+					$scope.app.datesForTheMonth.push(i);
+				};
+
 				Service.getShiftPlan(month,year)
-				.then(function () {
-					$scope.app.datesForTheMonth = [];
-					var firstDateOfMonth = 1;
-					var lastDateOfMonth = new Date(year,month+1,0).getDate();
-					for (var i = firstDateOfMonth; i <= lastDateOfMonth; i++) {
-						$scope.app.datesForTheMonth.push(i);
+				.then(function (response) {
+
+					$scope.app.shiftPlan = response.data;
+
+					//replace memberIds by memberNames
+					for(memberId in $scope.app.shiftPlan){
+						if ($scope.app.shiftPlan.hasOwnProperty(memberId)) {
+							for (var i = $scope.app.members.length - 1; i >= 0; i--) {
+								if ($scope.app.members[i]._id === parseInt(memberId)) {
+									var memberName = $scope.app.members[i].name;
+									$scope.app.shiftPlan[memberName] = $scope.app.shiftPlan[memberId];
+									delete $scope.app.shiftPlan[memberId];
+								};
+							};
+						}
 					};
+
+					//add "--" as shift for empty entries. change memberPlan from object to array
+					for(memberName in $scope.app.shiftPlan){
+						if ($scope.app.shiftPlan.hasOwnProperty(memberName)) {
+							var memberPlan = [];
+							for (var i = 0; i < $scope.app.datesForTheMonth.length; i++) {
+								var date = $scope.app.datesForTheMonth[i];
+								if (!$scope.app.shiftPlan[memberName][date]) {
+									memberPlan.push('--');
+								} else{
+									memberPlan.push($scope.app.shiftPlan[memberName][date]);
+								};
+							};
+							$scope.app.shiftPlan[memberName] = memberPlan;
+						};
+					};
+
 				},function () {});
+
+			};
+
+			$scope.shiftPlanIsEmpty = function () {
+				return angular.equals({},$scope.app.shiftPlan);
+			};
+
+			$scope.isUpdateDisabled = function () {
+				return !$scope.app.selectedMembers.length || $scope.app.selectedShift == null;
+			};
+
+			$scope.getClassName = function (entry) {
+				if (entry == 'S1') {
+					return 'text-primary';
+				} else if (entry == 'S2') {
+					return 'text-success';
+				} else if (entry == 'S3') {
+					return 'text-warning';
+				} else{
+					return 'text-muted';
+				}
 			};
 
 			Service.getMembers()
@@ -208,9 +264,18 @@
 				$scope.app.years.push(_year);
 			};
 
-			updateShiftPlan(currentMonth,currentYear);
-			$scope.$watch('app.selectedMonth+app.selectedYear',function () {
-				updateShiftPlan($scope.app.selectedMonth,$scope.app.selectedYear);
+			fetchShiftPlan(currentMonth,currentYear);
+
+			$scope.$watch('app.selectedMonth',function (newValue,oldValue) {
+				if (newValue != oldValue) {
+					fetchShiftPlan($scope.app.selectedMonth,$scope.app.selectedYear);
+				};
+			});
+
+			$scope.$watch('app.selectedYear',function (newValue,oldValue) {
+				if (newValue != oldValue) {
+					fetchShiftPlan($scope.app.selectedMonth,$scope.app.selectedYear);
+				};
 			});
 
 		}]);
@@ -237,6 +302,9 @@
 			margin-top: 35px;
 			margin-bottom: 35px;
 		}
+		.main .action-bar .updateButton{
+			width:60%;
+		}
 		.plan{
 			border: 1px solid #ddd;
 		}
@@ -246,6 +314,9 @@
 			padding: 10px;
 			border-top-left-radius: 3px;
     		border-top-right-radius: 3px;
+		}
+		.noShiftPlanMessage{
+			margin: 30px;
 		}
 	</style>
 </head>
@@ -279,7 +350,7 @@
 				</select>
 			</div>
 			<div class="col-md-3">
-				<button class="btn btn-primary" ng-click="bulkUpdate()">Update</button>
+				<button class="btn btn-default center-block updateButton" ng-click="bulkUpdate()" ng-disabled="isUpdateDisabled()">Update</button>
 			</div>
 		</div>
 		<div class="plan">
@@ -290,7 +361,7 @@
 				<select ng-model="app.selectedYear" ng-options="year for year in app.years">
 				</select>
 			</div>
-			<table class="table table-striped table-condensed">
+			<table class="table table-striped table-condensed" ng-hide="shiftPlanIsEmpty()">
 				<thead>
 					<tr>
 						<th></th>
@@ -298,12 +369,15 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr>
-						<td>Cyril Panicker</td>
-						<td ng-repeat="date in app.datesForTheMonth" ng-bind="date"></td>
+					<tr ng-repeat="(memberName,memberPlan) in app.shiftPlan | orderBy : 'memberName'">
+						<td ng-bind="memberName"></td>
+						<td ng-repeat="entry in memberPlan track by $index" ng-bind="entry" ng-class="getClassName(entry)"></td>
 					</tr>
 				</tbody>
 			</table>
+			<div ng-show="shiftPlanIsEmpty()" class="noShiftPlanMessage">
+				No shift plan.
+			</div>
 		</div>
 	</div>
 </body>
