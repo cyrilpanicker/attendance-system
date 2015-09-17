@@ -140,9 +140,11 @@
 				selectedMonth:currentMonth,
 				selectedYear:currentYear,
 				multiSelectSettings:{
-					nothingSelected : "Select Members",
-					selectNone : "Select None",
-					search : "Search..."
+					nothingSelected:'Select Members',
+					selectNone:'Select None',
+					selectAll:'Select All',
+					search:'Search...',
+					reset:'Reset'
 				},
 				shiftPlan:{}
 			};
@@ -302,6 +304,13 @@
 			margin-top: 35px;
 			margin-bottom: 35px;
 		}
+		.main .plan{
+			border-radius: 10px;
+		}
+		.main .plan .title{
+			border-top-left-radius: 10px;
+			border-top-right-radius: 10px;
+		}
 		.main .action-bar .updateButton{
 			width:60%;
 		}
@@ -334,7 +343,7 @@
 					item-label="name"
 					tick-property="selected"
 					max-labels="0"
-					helper-elements="none filter"
+					helper-elements="all none filter reset"
 					search-property="name"
 					max-height="300px"
 					translation="app.multiSelectSettings"
@@ -376,7 +385,7 @@
 				</tbody>
 			</table>
 			<div ng-show="shiftPlanIsEmpty()" class="noShiftPlanMessage">
-				No shift plan.
+				No entries yet.
 			</div>
 		</div>
 	</div>
